@@ -1,5 +1,10 @@
 <?php
 
+header('Access-Control-Allow-Origin:*');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Content-Type: application/json');
+
 require __DIR__ . '/controller/assetcontroller.php';
 require __DIR__ . '/controller/AssetCategory.php';
 require __DIR__ . '/controller/AssetSubCategory.php';
