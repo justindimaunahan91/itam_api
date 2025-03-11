@@ -53,8 +53,10 @@ class Asset extends Controller {
      * Get predefined repair urgency levels
      */
     function getRepairUrgencyLevels() {
-        $urgencyLevels = ["Critical", "High", "Medium", "Low"];
-        $this->sendJsonResponse(["urgency_level" => $urgencyLevels]);
+        $this->setStatement("SELECT * FROM `itam_repair_urgency");
+        $this->statement->execute([]);
+        $result = $this->statement->fetchAll();
+        $this->sendJsonResponse($result ?: ["error" => "Repair Urgency not found"], $result ? 200 : 404);
     }
 
     /**
@@ -75,6 +77,25 @@ class Asset extends Controller {
         $result = $this->statement->fetchAll();
 
         $this->sendJsonResponse($result ?: ["error" => "No assets with repair urgency found"], $result ? 200 : 404);
+    }
+       /**
+     * Retrieve all asset conditions.
+     */
+    function getAssetCondition() {
+        $this->setStatement("SELECT * FROM itam_asset_condition ORDER BY asset_condition_id ASC");
+        $this->statement->execute();
+        $result = $this->statement->fetchAll();
+        $this->sendJsonResponse($result ?: ["error" => "No asset conditions found"], $result ? 200 : 404);
+    }
+
+    /**
+     * Retrieve all asset statuses.
+     */
+    function getAssetStatus() {
+        $this->setStatement("SELECT * FROM itam_asset_status ORDER BY status_id ASC");
+        $this->statement->execute();
+        $result = $this->statement->fetchAll();
+        $this->sendJsonResponse($result ?: ["error" => "No asset statuses found"], $result ? 200 : 404);
     }
 }
 ?>

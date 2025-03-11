@@ -27,14 +27,44 @@ function getJsonInput() {
 }
 
 // Instantiate controllers
+$assetController = new Asset();
 $controller = [  
-    'asset'             => new Asset(),
-    'category'          => new AssetCategory(),
-    'subcategory'       => new AssetSubCategory(),
-    'type'              => new AssetType()
+    'asset'       => $assetController,
+    'category'    => new AssetCategory(),
+    'subcategory' => new AssetSubCategory(),
+    'type'        => new AssetType()
 ];
 
 $resource = $_GET['resource'] ?? null;
+
+/**
+ * Handle Special Requests
+ */
+switch ($resource) {
+    case "repair_urgency_levels":
+        sendJsonResponse($assetController->getRepairUrgencyLevels());
+        break;
+
+    case "repair_urgency_assets":
+        sendJsonResponse($assetController->getRepairUrgencyAssets());
+        break;
+
+    case "condition":
+        sendJsonResponse($assetController->getAssetCondition());
+        break;
+
+    case "status":
+        sendJsonResponse($assetController->getAssetStatus());
+        break;
+
+    default:
+        if ($resource && isset($controller[$resource])) {
+            handleRequest($controller[$resource], $routes[$resource]);
+        } else {
+            sendJsonResponse(["error" => "Unknown or missing 'resource' parameter"], 400);
+        }
+        break;
+}
 
 /**
  * Handle CRUD operations dynamically
@@ -82,29 +112,7 @@ function handleRequest($controller, $actions) {
     }
 }
 
-/**
- * Handle Repair Urgency Requests
- */
-if ($resource === "repair_urgency_levels") {
-    sendJsonResponse([
-        "urgency_levels" => [
-            "Critical",
-            "High",
-            "Medium",
-            "Low"
-        ]
-    ]);
-    exit;
-}
-
-// **Handle Assets with Urgent Repairs**
-if ($resource === "repair_urgency_assets") {
-    $assetController = new Asset();
-    $result = $assetController->getRepairUrgencyAssets();
-    sendJsonResponse($result);
-    exit;
-}
-
+// Define API routes
 $routes = [
     'asset' => [
         'getAll'  => 'retrieveAssets',
@@ -135,10 +143,3 @@ $routes = [
         'delete'  => 'deleteAssetType'
     ]
 ];
-
-// Handle API Request
-if ($resource && isset($controller[$resource]) && isset($routes[$resource])) {
-    handleRequest($controller[$resource], $routes[$resource]);
-} else {
-    sendJsonResponse(["error" => "Unknown or missing 'resource' parameter"], 400);
-}
