@@ -10,6 +10,37 @@ require __DIR__ . '/controller/AssetCategory.php';
 require __DIR__ . '/controller/AssetSubCategory.php';
 require __DIR__ . '/controller/AssetType.php';
 
+// Define API routes
+$routes = [
+    'asset' => [
+        'getAll'  => 'retrieveAssets',
+        'getOne'  => 'retrieveOneAsset',
+        'create'  => 'insertAsset',
+        'update'  => 'updateAsset',
+        'delete'  => 'deleteAsset'
+    ],
+    'category' => [
+        'getAll'  => 'retrieveCategories',
+        'getOne'  => 'retrieveOneCategory',
+        'create'  => 'insertCategory',
+        'update'  => 'updateCategory',
+        'delete'  => 'deleteCategory'
+    ],
+    'subcategory' => [
+        'getAll'  => 'retrieveSubCategories',
+        'getOne'  => 'retrieveOneSubCategory',
+        'create'  => 'insertSubCategory',
+        'update'  => 'updateSubCategory',
+        'delete'  => 'deleteSubCategory'
+    ],
+    'type' => [
+        'getAll'  => 'retrieveAssetTypes',
+        'getOne'  => 'retrieveOneAssetType',
+        'create'  => 'insertAssetType',
+        'update'  => 'updateAssetType',
+        'delete'  => 'deleteAssetType'
+    ]
+];
 /**
  * Send JSON response with HTTP status code
  */
@@ -46,7 +77,7 @@ $resource = $_GET['resource'] ?? null;
  * Handle Special Requests
  */
 switch ($resource) {
-    case "repair_urgency_levels":
+    case "repairUrgency":
         sendJsonResponse($assetController->getRepairUrgencyLevels());
         break;
 
@@ -117,34 +148,4 @@ function handleRequest($controller, $actions) {
     }
 }
 
-// Define API routes
-$routes = [
-    'asset' => [
-        'getAll'  => 'retrieveAssets',
-        'getOne'  => 'retrieveOneAsset',
-        'create'  => 'insertAsset',
-        'update'  => 'updateAsset',
-        'delete'  => 'deleteAsset'
-    ],
-    'category' => [
-        'getAll'  => 'retrieveCategories',
-        'getOne'  => 'retrieveOneCategory',
-        'create'  => 'insertCategory',
-        'update'  => 'updateCategory',
-        'delete'  => 'deleteCategory'
-    ],
-    'subcategory' => [
-        'getAll'  => 'retrieveSubCategories',
-        'getOne'  => 'retrieveOneSubCategory',
-        'create'  => 'insertSubCategory',
-        'update'  => 'updateSubCategory',
-        'delete'  => 'deleteSubCategory'
-    ],
-    'type' => [
-        'getAll'  => 'retrieveAssetTypes',
-        'getOne'  => 'retrieveOneAssetType',
-        'create'  => 'insertAssetType',
-        'update'  => 'updateAssetType',
-        'delete'  => 'deleteAssetType'
-    ]
-];
+
