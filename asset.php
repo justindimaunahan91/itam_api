@@ -118,9 +118,12 @@ function handleRequest($controller, $actions) {
                 break;
             
             case 'POST':
-                $data = $_POST ?: getJsonInput();
-                $success = call_user_func_array([$controller, $actions['create']], array_values($data));
-                sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
+                $data = json_decode($_POST['data']);
+                $data = (array) $data;
+
+                $a = $controller->insertAsset($data);
+                // $success = call_user_func_array([$controller, $actions['create']], $data);
+                // sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
                 break;
 
             case 'PUT':
