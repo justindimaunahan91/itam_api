@@ -25,6 +25,7 @@ class Asset extends Controller
         $result = $this->statement->fetch();
         $this->sendJsonResponse($result ?: ["error" => "Asset not found"], $result ? 200 : 404);
     }
+    
 
     function insertAsset($data)
     {

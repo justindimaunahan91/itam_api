@@ -19,7 +19,7 @@ switch ($method) {
         break;
     
     case 'POST':
-        $data = getJsonInput();
+        $data = (array) json_decode($_POST['data']);
         $success = call_user_func_array([$controller, 'addAssetTransaction'], array_values($data));
         sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"]);
         break;
