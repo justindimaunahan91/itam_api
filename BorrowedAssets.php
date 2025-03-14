@@ -46,9 +46,9 @@ try {
             break;
 
         case 'POST':
-            $data = getJsonInput();
-            if (isset($data['user_id'], $data['asset_id'], $data['date_borrowed'], $data['due_date'], $data['asset_condition_id'])) {
-                $result = $borrowedAssets->insertBorrowedAsset($data['user_id'], $data['asset_id'], $data['date_borrowed'], $data['due_date'], $data['asset_condition_id'], $data['remarks'] ?? null);
+            $data = (array) json_decode($_POST['data']);
+            if (isset($data['user_id'], $data['asset_id'], $data['date_borrowed'], $data['due_date'],$data['duration'], $data['asset_condition_id'], $data['remarks'])) {
+                $result = $borrowedAssets->insertBorrowedAsset($data['user_id'], $data['asset_id'], $data['date_borrowed'], $data['due_date'], $data['duration'], $data['asset_condition_id'], $data['remarks'] ?? null);
                 sendJsonResponse($result);
             } else {
                 sendJsonResponse(["error" => "Missing required fields"], 400);

@@ -74,15 +74,15 @@ class BorrowedAssetsController extends Controller
     /**
      * Insert a new borrowed asset transaction.
      */
-    public function insertBorrowedAsset($userId, $assetId, $dateBorrowed, $dueDate, $assetConditionId, $remarks = null)
+    public function insertBorrowedAsset($userId, $assetId, $dateBorrowed, $dueDate, $duration, $assetConditionId, $remarks = null)
     {
         try {
             $sql = "INSERT INTO itam_asset_transactions 
-                    (user_id, asset_id, date_borrowed, due_date, asset_condition_id, remarks) 
-                    VALUES (?, ?, ?, ?, ?, ?)";
+                    (user_id, asset_id, date_borrowed, due_date, duration, asset_condition_id, remarks) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
 
             $this->setStatement($sql);
-            $success = $this->statement->execute([$userId, $assetId, $dateBorrowed, $dueDate, $assetConditionId, $remarks]);
+            $success = $this->statement->execute([$userId, $assetId, $dateBorrowed, $dueDate, $duration, $assetConditionId, $remarks]);
 
             return ["message" => $success ? "Transaction added successfully" : "Insert failed"];
         } catch (Exception $e) {
