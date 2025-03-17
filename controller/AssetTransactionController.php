@@ -68,11 +68,11 @@ class AssetTransactionController extends Controller {
     /**
      * Add a new asset transaction
      */
-    function addAssetTransaction($user_id, $asset_id, $date_borrowed, $due_date, $return_date = null, $duration = null, $asset_condition_id, $remarks = null) {
+    function addAssetTransaction($user_id, $asset_id, $date_borrowed, $due_date, $return_date = null, $duration = null, $asset_condition_id, $remarks = null, ) {
         try {
-            $this->setStatement("INSERT INTO itam_asset_transactions (user_id, asset_id, date_borrowed, due_date, return_date, duration, asset_condition_id, remarks)
+            $this->setStatement("INSERT INTO itam_asset_transactions (user_id, asset_id, date_borrowed, due_date, return_date, duration, asset_condition_id, remarks, )
                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $success = $this->statement->execute([$user_id, $asset_id, $date_borrowed, $due_date, $return_date, $duration, $asset_condition_id, $remarks]);
+            $success = $this->statement->execute([$user_id, $asset_id, $date_borrowed, $due_date, $return_date, $duration, $asset_condition_id, $remarks, ]);
 
             $this->sendJsonResponse(["message" => $success ? "Transaction added successfully" : "Failed to add transaction"], $success ? 201 : 500);
         } catch (Exception $e) {
