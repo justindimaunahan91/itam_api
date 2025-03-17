@@ -9,24 +9,27 @@ class RepairRequestController extends Controller {
     function getRepairRequests(): array {
         try {
             $this->setStatement("SELECT 
-                        r.repair_request_id,
-                        r.user_id,
-                        u.employee_id,
-                        CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
-                        r.asset_id,
-                        a.asset_name,
-                        r.issue,
-                        r.remarks,
-                        r.date_reported,
-                        r.urgency_id,
-                        r.repair_start_date,
-                        r.repair_completion_date,
-                        r.status_id,
-                        r.repair_cost
-                    FROM itam_asset_repair_request AS r
-                    JOIN itam_asset AS a ON r.asset_id = a.asset_id
-                    JOIN un_users AS u ON r.user_id = u.user_id
-                    ORDER BY r.repair_request_id");
+    r.repair_request_id,
+    r.user_id,
+    u.employee_id,
+    CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
+    r.asset_id,
+    a.asset_name,
+    r.issue,
+    r.remarks,
+    r.date_reported,
+    urg.urgency_level,
+    r.repair_start_date,
+    r.repair_completion_date,
+    s.status_name,  
+    r.repair_cost
+FROM itam_asset_repair_request AS r
+JOIN itam_asset AS a ON r.asset_id = a.asset_id
+JOIN un_users AS u ON r.user_id = u.user_id
+JOIN itam_repair_urgency AS urg ON r.urgency_id = urg.urgency_id  
+JOIN itam_asset_status AS s ON r.status_id = s.status_id 
+ORDER BY r.repair_request_id;
+");
             $this->statement->execute();
             return $this->statement->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
