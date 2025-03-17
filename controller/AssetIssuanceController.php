@@ -36,10 +36,11 @@ ORDER BY i.issuance_id;
         try {
             $this->setStatement("SELECT i.issuance_id, i.asset_id, a.asset_name, i.user_id, 
                                          CONCAT(u.first_name, ' ', u.last_name) AS employee_name, 
-                                         i.issuance_date, i.status_id
+                                         i.issuance_date, s.status_name 
                                   FROM itam_asset_issuance AS i
                                   JOIN itam_asset AS a ON i.asset_id = a.asset_id
                                   JOIN un_users AS u ON i.user_id = u.user_id
+                                  JOIN itam_asset_status AS s ON i.status_id = s.status_id  
                                   WHERE i.issuance_id = ?");
             $this->statement->execute([$issuance_id]);
             $result = $this->statement->fetch(PDO::FETCH_ASSOC);
