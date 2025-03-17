@@ -26,7 +26,6 @@ FROM itam_asset_transactions AS t
 JOIN un_users AS u ON t.user_id = u.user_id
 JOIN itam_asset AS a ON t.asset_id = a.asset_id
 JOIN itam_asset_condition AS c ON t.asset_condition_id = c.asset_condition_id  
-WHERE t.return_date IS NULL
 ORDER BY t.date_borrowed DESC;
 ";
 
