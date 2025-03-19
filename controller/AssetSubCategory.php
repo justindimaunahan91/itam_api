@@ -15,7 +15,7 @@ class AssetSubCategory extends Controller {
         $this->setStatement("SELECT * FROM itam_asset_sub_category WHERE sub_category_id = ?");
         $this->statement->execute([$id]);
         $result = $this->statement->fetch();
-        $this->sendJsonResponse($result ?: ["error" => "Sub-category not found"], $result ? 200 : 404);
+        return $result;
     }
 
     // Insert a new sub-category

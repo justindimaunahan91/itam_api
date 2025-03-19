@@ -128,13 +128,15 @@ class BorrowedAssetsController extends Controller
     /**
      * Mark a borrowed asset as returned.
      */
-    public function returnBorrowedAsset($borrowTransactionId, $returnDate)
+    public function returnBorrowedAsset($borrowTransactionId, $returnDate, $assetConditionId)
     {
         try {
-            $sql = "UPDATE itam_asset_transactions SET return_date = ? WHERE borrow_transaction_id = ?";
+            $sql = "UPDATE itam_asset_transactions 
+                SET return_date = ?, asset_condition_id = ? 
+                WHERE borrow_transaction_id = ?";
 
             $this->setStatement($sql);
-            $success = $this->statement->execute([$returnDate, $borrowTransactionId]);
+            $success = $this->statement->execute([$returnDate, $borrowTransactionId, $assetConditionId]);
 
             return ["message" => $success ? "Asset marked as returned" : "Update failed"];
         } catch (Exception $e) {
