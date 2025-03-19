@@ -43,7 +43,7 @@ class Asset extends Controller
         $subcategory_item = $this->retrieveOneSubCategory($sub_category_id);
         $subcategory_code = $subcategory_item->code;
         $asset_name = $subcategory_code . "-".$category_id;
-        if(is_null($type_id)){
+        if($type_id=== ""){
             $asset_name .= str_pad($count , 4, "0",STR_PAD_LEFT);
         }
         else{
