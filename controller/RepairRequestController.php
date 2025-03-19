@@ -13,7 +13,9 @@ class RepairRequestController extends Controller {
                                     r.user_id,
                                     u.employee_id,
                                     CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
+                                    u.company_id
                                     u.department_id,
+                                    c.name
                                     d.name,
                                     r.asset_id,
                                     a.asset_name,
@@ -33,6 +35,7 @@ class RepairRequestController extends Controller {
                                 JOIN itam_asset AS a ON r.asset_id = a.asset_id
                                 JOIN itam_asset_sub_category AS sub ON a.sub_category_id = sub.sub_category_id
                                 JOIN un_users AS u ON r.user_id = u.user_id
+                                JOIN un_company AS c ON u.company_id = c.company_id
                                 JOIN un_company_departments AS d ON u.department_id = d.department_id
                                 JOIN itam_repair_urgency AS urg ON r.urgency_id = urg.urgency_id  
                                 JOIN itam_asset_status AS s ON r.status_id = s.status_id 
