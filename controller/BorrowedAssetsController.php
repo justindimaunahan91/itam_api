@@ -15,7 +15,7 @@ class BorrowedAssetsController extends Controller
                         u.employee_id,
                         CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
                         comp.name,
-                        u.company_id
+                        u.company_id,
                         u.department_id,
                         d.name,
                         t.asset_id,
