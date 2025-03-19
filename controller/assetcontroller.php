@@ -47,7 +47,7 @@ class Asset extends Controller
             $asset_name .= str_pad($count , 4, "0",STR_PAD_LEFT);
         }
         else{
-            $asset_name .= str_pad($count , 3, "0",STR_PAD_LEFT);
+            $asset_name .=$type_id. str_pad($count , 3, "0",STR_PAD_LEFT);
         }
         $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, availability_status, location, specifications, asset_amount, warranty_duration, aging, warranty_due_date, purchase_date, notes) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"); 
