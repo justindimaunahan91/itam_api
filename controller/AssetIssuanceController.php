@@ -11,31 +11,33 @@ class AssetIssuanceController extends Controller
     {
         try {
             $this->setStatement("SELECT 
-                i.issuance_id, 
-                i.asset_id, 
-                a.asset_name,
-                a.category_id,
-                a.sub_category_id,
-                cat.category_name,
-                sub.sub_category_name,
-                i.user_id,
-                u.company_id,
-                u.department_id,
-                d.name AS department_name,
-                comp.name AS company_name,
-                CONCAT(u.first_name, ' ', u.last_name) AS employee_name, 
-                i.issuance_date,
-                s.status_id,
-                s.status_name  
-            FROM itam_asset_issuance AS i
-            JOIN itam_asset AS a ON i.asset_id = a.asset_id
-            LEFT JOIN itam_asset_sub_category AS sub ON a.sub_category_id = sub.sub_category_id
-            JOIN un_users AS u ON i.user_id = u.user_id
-            LEFT JOIN un_companies AS comp ON u.company_id = comp.company_id
-            LEFT JOIN un_company_departments AS d ON u.department_id = d.department_id
-            LEFT JOIN itam_asset_category AS cat ON a.category_id = cat.category_id
-            LEFT JOIN itam_asset_status AS s ON i.status_id = s.status_id  
-            ORDER BY i.issuance_id;
+    i.issuance_id, 
+    i.asset_id, 
+    a.asset_name,
+    a.category_id,
+    a.sub_category_id,
+    cat.category_name,
+    sub.sub_category_name,
+    i.user_id,
+    u.company_id,
+    u.department_id,
+    d.name AS department_name,
+    comp.name AS company_name,
+    CONCAT(u.first_name, ' ', u.last_name) AS employee_name, 
+    i.issuance_date,
+    s.status_id,
+    s.status_name,
+    i.remarks  
+FROM itam_asset_issuance AS i
+JOIN itam_asset AS a ON i.asset_id = a.asset_id
+LEFT JOIN itam_asset_sub_category AS sub ON a.sub_category_id = sub.sub_category_id
+JOIN un_users AS u ON i.user_id = u.user_id
+LEFT JOIN un_companies AS comp ON u.company_id = comp.company_id
+LEFT JOIN un_company_departments AS d ON u.department_id = d.department_id
+LEFT JOIN itam_asset_category AS cat ON a.category_id = cat.category_id
+LEFT JOIN itam_asset_status AS s ON i.status_id = s.status_id  
+ORDER BY i.issuance_id;
+
             ");
             $this->statement->execute();
             return $this->statement->fetchAll(PDO::FETCH_ASSOC);
