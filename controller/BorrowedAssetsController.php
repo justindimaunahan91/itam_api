@@ -59,22 +59,37 @@ class BorrowedAssetsController extends Controller
     {
         try {
             $sql = "SELECT
-                        t.borrow_transaction_id,
-                        t.user_id,
-                        u.employee_id,
-                        CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
-                        t.asset_id,
-                        a.asset_name,
-                        t.date_borrowed,
-                        t.due_date,
-                        t.duration,
-                        c.asset_condition_name, 
-                        t.remarks
-                    FROM itam_asset_transactions AS t
-                    JOIN un_users AS u ON t.user_id = u.user_id
-                    JOIN itam_asset AS a ON t.asset_id = a.asset_id
-                    JOIN itam_asset_condition AS c ON t.asset_condition_id = c.asset_condition_id  
-                    WHERE t.borrow_transaction_id = ?";
+    t.borrow_transaction_id,
+    t.user_id,
+    u.employee_id,
+    CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
+    comp.name AS company_name,
+    u.company_id,
+    u.department_id,
+    d.name AS department_name,
+    t.asset_id,
+    a.category_id,
+    a.sub_category_id,
+    cat.category_name,
+    s.sub_category_name,
+    a.asset_name,
+    t.date_borrowed,
+    t.due_date,
+    t.return_date,
+    t.duration,
+    t.asset_condition_id,
+    c.asset_condition_name, 
+    t.remarks
+FROM itam_asset_transactions AS t
+JOIN un_users AS u ON t.user_id = u.user_id
+LEFT JOIN un_company_departments AS d ON u.department_id = d.department_id
+LEFT JOIN un_companies AS comp ON u.company_id = comp.company_id
+JOIN itam_asset AS a ON t.asset_id = a.asset_id
+LEFT JOIN itam_asset_category AS cat ON a.category_id = cat.category_id
+LEFT JOIN itam_asset_sub_category AS s ON a.sub_category_id = s.sub_category_id
+LEFT JOIN itam_asset_condition AS c ON t.asset_condition_id = c.asset_condition_id  
+WHERE t.borrow_transaction_id = ?";
+
 
             $this->setStatement($sql);
             $this->statement->execute([$borrowTransactionId]);
