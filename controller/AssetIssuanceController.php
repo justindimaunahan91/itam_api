@@ -30,7 +30,7 @@ class AssetIssuanceController extends Controller
             JOIN itam_asset_sub_category AS sub ON a.sub_category_id = sub.sub_category_id
             JOIN un_users AS u ON i.user_id = u.user_id
             JOIN un_company_departments AS d ON u.department_id = d.department_id
-            JOIN un_company AS comp ON u.company_id = comp.company_id
+            JOIN un_companies AS comp ON u.company_id = comp.company_id
             JOIN itam_asset_status AS s ON i.status_id = s.status_id  
             ORDER BY i.issuance_id;
             ");

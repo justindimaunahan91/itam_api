@@ -32,7 +32,7 @@ class BorrowedAssetsController extends Controller
                     FROM itam_asset_transactions AS t
                     JOIN un_users AS u ON t.user_id = u.user_id
                     JOIN un_company_departments AS d ON u.department_id = d.department_id
-                    JOIN un_company AS comp ON u.company_id = comp.company_id
+                    JOIN un_companies AS comp ON u.company_id = comp.company_id
                     JOIN itam_asset AS a ON t.asset_id = a.asset_id
                     JOIN itam_asset_sub_category AS s ON a.sub_category_id = s.sub_category_id
                     JOIN itam_asset_condition AS c ON t.asset_condition_id = c.asset_condition_id  
