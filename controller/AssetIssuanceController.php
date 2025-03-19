@@ -16,7 +16,9 @@ class AssetIssuanceController extends Controller
                 a.asset_name,
                 a.sub_category_id,
                 sub.sub_category_name,
-                i.user_id, 
+                i.user_id,
+                u.company_id,
+                comp.company_id, 
                 u.department_id,
                 d.name,
                 CONCAT(u.first_name, ' ', u.last_name) AS employee_name, 
@@ -28,6 +30,7 @@ class AssetIssuanceController extends Controller
             JOIN itam_asset_sub_category AS sub ON a.sub_category_id = sub.sub_category_id
             JOIN un_users AS u ON i.user_id = u.user_id
             JOIN un_company_departments AS d ON u.department_id = d.department_id
+            JOIN un_company AS comp ON u.company_id = comp.company_id
             JOIN itam_asset_status AS s ON i.status_id = s.status_id  
             ORDER BY i.issuance_id;
             ");

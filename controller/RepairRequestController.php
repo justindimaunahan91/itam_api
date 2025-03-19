@@ -13,9 +13,9 @@ class RepairRequestController extends Controller {
                                     r.user_id,
                                     u.employee_id,
                                     CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
-                                    u.company_id
+                                    u.company_id,
                                     u.department_id,
-                                    c.name
+                                    c.name,
                                     d.name,
                                     r.asset_id,
                                     a.asset_name,
