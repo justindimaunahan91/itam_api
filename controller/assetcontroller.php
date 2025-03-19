@@ -1,6 +1,5 @@
 <?php
 require_once 'controller.php';
-require_once 'AssetSubCategory.php';
 class Asset extends Controller
 {
     function retrieveAssets()
@@ -25,6 +24,13 @@ class Asset extends Controller
         $result = $this->statement->fetch();
         $this->sendJsonResponse($result ?: ["error" => "Asset not found"], $result ? 200 : 404);
     }
+        // Retrieve a single sub-category by ID
+        function retrieveOneSubCategory($id) {
+            $this->setStatement("SELECT * FROM itam_asset_sub_category WHERE sub_category_id = ?");
+            $this->statement->execute([$id]);
+            $result = $this->statement->fetch();
+            return $result;
+        }
     
 
     function insertAsset($data)
@@ -34,15 +40,14 @@ class Asset extends Controller
         $this->statement->execute([$sub_category_id, $category_id, $type_id]);
         $count = $this->statement->fetchColumn(0);
         $count = $count + 1;
-        $subcategory = new AssetSubCategory();
-        $subcategory_item = $subcategory->retrieveOneSubCategory($sub_category_id);
+        $subcategory_item = $this->retrieveOneSubCategory($sub_category_id);
         $subcategory_code = $subcategory_item->code;
         $asset_name = $subcategory_code . "-".$category_id;
         if(is_null($type_id)){
-            $asset_name .= str_pad($count , 4, "0",str_pad_left);
+            $asset_name .= str_pad($count , 4, "0",STR_PAD_LEFT);
         }
         else{
-            $asset_name .= str_pad($count , 3, "0",str_pad_left);
+            $asset_name .= str_pad($count , 3, "0",STR_PAD_LEFT);
         }
         $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, availability_status, location, specifications, asset_amount, warranty_duration, aging, warranty_due_date, purchase_date, notes) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"); 
