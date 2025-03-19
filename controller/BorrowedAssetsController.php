@@ -14,12 +14,14 @@ class BorrowedAssetsController extends Controller
                         t.user_id,
                         u.employee_id,
                         CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
-                        comp.name,
+                        comp.name AS company_name,
                         u.company_id,
                         u.department_id,
-                        d.name,
+                        d.name AS department_name,
                         t.asset_id,
+                        a.category_id,
                         a.sub_category_id,
+                        cat.category_name,
                         s.sub_category_name,
                         a.asset_name,
                         t.date_borrowed,
@@ -31,11 +33,12 @@ class BorrowedAssetsController extends Controller
                         t.remarks
                     FROM itam_asset_transactions AS t
                     JOIN un_users AS u ON t.user_id = u.user_id
-                    JOIN un_company_departments AS d ON u.department_id = d.department_id
-                    JOIN un_companies AS comp ON u.company_id = comp.company_id
+                    LEFT JOIN un_company_departments AS d ON u.department_id = d.department_id
+                    LEFT JOIN un_companies AS comp ON u.company_id = comp.company_id
                     JOIN itam_asset AS a ON t.asset_id = a.asset_id
-                    JOIN itam_asset_sub_category AS s ON a.sub_category_id = s.sub_category_id
-                    JOIN itam_asset_condition AS c ON t.asset_condition_id = c.asset_condition_id  
+                    LEFT JOIN itam_asset_category AS cat ON a.category_id = cat.category_id
+                    LEFT JOIN itam_asset_sub_category AS s ON a.sub_category_id = s.sub_category_id
+                    LEFT JOIN itam_asset_condition AS c ON t.asset_condition_id = c.asset_condition_id
                     ORDER BY t.borrow_transaction_id ASC;
                     ";
 
