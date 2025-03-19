@@ -9,27 +9,35 @@ class RepairRequestController extends Controller {
     function getRepairRequests(): array {
         try {
             $this->setStatement("SELECT 
-    r.repair_request_id,
-    r.user_id,
-    u.employee_id,
-    CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
-    r.asset_id,
-    a.asset_name,
-    r.issue,
-    r.remarks,
-    r.date_reported,
-    urg.urgency_level,
-    r.repair_start_date,
-    r.repair_completion_date,
-    s.status_name,  
-    r.repair_cost
-FROM itam_asset_repair_request AS r
-JOIN itam_asset AS a ON r.asset_id = a.asset_id
-JOIN un_users AS u ON r.user_id = u.user_id
-JOIN itam_repair_urgency AS urg ON r.urgency_id = urg.urgency_id  
-JOIN itam_asset_status AS s ON r.status_id = s.status_id 
-ORDER BY r.repair_request_id;
-");
+                                    r.repair_request_id,
+                                    r.user_id,
+                                    u.employee_id,
+                                    CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
+                                    u.department_id,
+                                    d.name,
+                                    r.asset_id,
+                                    a.asset_name,
+                                    a.sub_category_id,
+                                    sub.sub_category_name,
+                                    r.issue,
+                                    r.remarks,
+                                    r.date_reported,
+                                    r.urgency_id,
+                                    urg.urgency_level,
+                                    r.repair_start_date,
+                                    r.repair_completion_date,
+                                    r.status_id, 
+                                    s.status_name,  
+                                    r.repair_cost
+                                FROM itam_asset_repair_request AS r
+                                JOIN itam_asset AS a ON r.asset_id = a.asset_id
+                                JOIN itam_asset_sub_category AS sub ON a.sub_category_id = sub.sub_category_id
+                                JOIN un_users AS u ON r.user_id = u.user_id
+                                JOIN un_company_departments AS d ON u.department_id = d.department_id
+                                JOIN itam_repair_urgency AS urg ON r.urgency_id = urg.urgency_id  
+                                JOIN itam_asset_status AS s ON r.status_id = s.status_id 
+                                ORDER BY r.urgency_id ASC;
+                                ");
             $this->statement->execute();
             return $this->statement->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
@@ -43,26 +51,28 @@ ORDER BY r.repair_request_id;
     function getRepairRequest($repair_request_id) {
         try {
             $this->setStatement("SELECT 
-                        r.repair_request_id,
-                        r.user_id,
-                        u.employee_id,
-                        CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
-                        r.asset_id,
-                        a.asset_name,
-                        r.issue,
-                        r.remarks,
-                        r.date_reported,
-                       urg.urgency_level,
-                        r.repair_start_date,
-                        r.repair_completion_date,
-                        s.status_name,  
-                        r.repair_cost
-                    FROM itam_asset_repair_request AS r
-                    JOIN itam_asset AS a ON r.asset_id = a.asset_id
-                    JOIN un_users AS u ON r.user_id = u.user_id
-                    JOIN itam_repair_urgency AS urg ON r.urgency_id = urg.urgency_id  
-                    JOIN itam_asset_status AS s ON r.status_id = s.status_id 
-                    WHERE r.repair_request_id = ?");
+                                    r.repair_request_id,
+                                    r.user_id,
+                                    u.employee_id,
+                                    CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
+                                    r.asset_id,
+                                    a.asset_name,
+                                    r.issue,
+                                    r.remarks,
+                                    r.date_reported,
+                                    r.urgency_id,
+                                    urg.urgency_level,
+                                    r.repair_start_date,
+                                    r.repair_completion_date,
+                                    r.status_id,  
+                                    s.status_name,  
+                                    r.repair_cost
+                                FROM itam_asset_repair_request AS r
+                                JOIN itam_asset AS a ON r.asset_id = a.asset_id
+                                JOIN un_users AS u ON r.user_id = u.user_id
+                                JOIN itam_repair_urgency AS urg ON r.urgency_id = urg.urgency_id  
+                                JOIN itam_asset_status AS s ON r.status_id = s.status_id 
+                                WHERE r.repair_request_id = ?");
             $this->statement->execute([$repair_request_id]);
             $result = $this->statement->fetch(PDO::FETCH_ASSOC);
 

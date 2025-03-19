@@ -10,24 +10,31 @@ class BorrowedAssetsController extends Controller
     {
         try {
             $sql = "SELECT
-    t.borrow_transaction_id,
-    t.user_id,
-    u.employee_id,
-    CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
-    t.asset_id,
-    a.asset_name,
-    t.date_borrowed,
-    t.due_date,
-    t.return_date,
-    t.duration,
-    c.asset_condition_name, 
-    t.remarks
-FROM itam_asset_transactions AS t
-JOIN un_users AS u ON t.user_id = u.user_id
-JOIN itam_asset AS a ON t.asset_id = a.asset_id
-JOIN itam_asset_condition AS c ON t.asset_condition_id = c.asset_condition_id  
-ORDER BY t.date_borrowed DESC;
-";
+                        t.borrow_transaction_id,
+                        t.user_id,
+                        u.employee_id,
+                        CONCAT(u.first_name, ' ', u.last_name) AS employee_name,
+                        u.department_id,
+                        d.name,
+                        t.asset_id,
+                        a.sub_category_id,
+                        s.sub_category_name,
+                        a.asset_name,
+                        t.date_borrowed,
+                        t.due_date,
+                        t.return_date,
+                        t.duration,
+                        t.asset_condition_id,
+                        c.asset_condition_name, 
+                        t.remarks
+                    FROM itam_asset_transactions AS t
+                    JOIN un_users AS u ON t.user_id = u.user_id
+                    JOIN un_company_departments AS d ON u.department_id = d.department_id
+                    JOIN itam_asset AS a ON t.asset_id = a.asset_id
+                    JOIN itam_asset_sub_category AS s ON a.sub_category_id = s.sub_category_id
+                    JOIN itam_asset_condition AS c ON t.asset_condition_id = c.asset_condition_id  
+                    ORDER BY t.borrow_transaction_id ASC;
+                    ";
 
             $this->setStatement($sql);
             $this->statement->execute();

@@ -5,7 +5,7 @@ class Asset extends Controller
 {
     function retrieveAssets()
     {
-        $this->setStatement("SELECT A.*, C.category_name, SC.sub_category_name, T.type_name, 
+        $this->setStatement("SELECT A.*, C.category_name, SC.sub_category_name, A.type_id, T.type_name, 
        CO.asset_condition_name, S.status_name 
 		FROM itam_asset A
 		LEFT JOIN itam_asset_category C ON A.category_id = C.category_id
