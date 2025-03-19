@@ -5,14 +5,7 @@ class Asset extends Controller
 {
     function retrieveAssets()
     {
-        $this->setStatement("SELECT A.*, C.category_name, SC.sub_category_name, A.type_id, T.type_name, 
-       CO.asset_condition_name, S.status_name 
-		FROM itam_asset A
-		LEFT JOIN itam_asset_category C ON A.category_id = C.category_id
-		LEFT JOIN itam_asset_sub_category SC ON A.sub_category_id = SC.sub_category_id
-		LEFT JOIN itam_asset_type T ON A.type_id = T.type_id
-		LEFT JOIN itam_asset_condition CO ON A.asset_condition_id = CO.asset_condition_id
-		LEFT JOIN itam_asset_status S ON A.availability_status = S.status_id;");
+        $this->setStatement("SELECT * FROM itam_asset;");
 
         $this->statement->execute();
         $this->sendJsonResponse($this->statement->fetchAll());
@@ -31,8 +24,8 @@ class Asset extends Controller
     {
         extract($data);
 
-        $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, category_id, sub_category_id, asset_condition_id, type_id, availability_status, location, specifications, asset_amount, warranty_duration, aging, warranty_due_date, purchase_date, notes) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, availability_status, location, specifications, asset_amount, warranty_duration, aging, warranty_due_date, purchase_date, notes) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
         $success = $this->statement->execute([$asset_name, $serial_number, $category_id, $sub_category_id === "" ? null : $sub_category_id,  4, $type_id === "" ? null : $type_id, $availability_status_id, $location, $specifications, $asset_amount, $warranty_duration, 0, $warranty_due_date, $purchase_date, $notes]);
 
