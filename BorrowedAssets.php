@@ -47,8 +47,8 @@ try {
 
         case 'POST':
             $data = (array) json_decode($_POST['data']);
-            if (isset($data['company_id'], $data['department_id'], $data['user_id'], $data['asset_id'], $data['date_borrowed'], $data['due_date'],$data['duration'], $data['asset_condition_id'], $data['remarks'] )) {
-                $result = $borrowedAssets->insertBorrowedAsset($data['company_id'], $data['department_id'], $data['unit_id'] === "" ? NULL : $data['unit_id'], $data['user_id'], $data['asset_id'], $data['date_borrowed'], $data['due_date'], $data['duration'], $data['asset_condition_id'], $data['remarks']  ?? null);
+            if (isset($data['company_id'], $data['user_id'], $data['asset_id'], $data['date_borrowed'], $data['due_date'],$data['duration'], $data['remarks'] )) {
+                $result = $borrowedAssets->insertBorrowedAsset($data['company_id'], $data['department_id'] === "" ? NULL : $data['department_id'], $data['unit_id'] === "" ? NULL : $data['unit_id'], $data['user_id'], $data['asset_id'], $data['date_borrowed'], $data['due_date'], $data['duration'], $data['asset_condition_id'], $data['remarks']  ?? null);
                 sendJsonResponse($result);
             } else {
                 sendJsonResponse(["error" => "Missing required fields"], 400);
