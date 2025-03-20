@@ -41,6 +41,7 @@ $routes = [
         'delete'  => 'deleteAssetType'
     ]
 ];
+
 /**
  * Send JSON response with HTTP status code
  */
@@ -49,17 +50,6 @@ function sendJsonResponse($data, $status = 200) {
     header('Content-Type: application/json');
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
     exit;
-}
-
-/**
- * Retrieve JSON input
- */
-function getJsonInput() {
-    $input = json_decode(file_get_contents('php://input'), true);
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        sendJsonResponse(['error' => 'Invalid JSON input'], 400);
-    }
-    return $input;
 }
 
 // Instantiate controllers
@@ -118,16 +108,16 @@ function handleRequest($controller, $actions) {
                 break;
             
             case 'POST':
-                $data = json_decode($_POST['data']);
-                $data = (array) $data;
+                // Process form data and file upload
+                $data = $_POST;
+                $file = isset($_FILES['file']) ? $_FILES['file'] : null;
 
-                $a = $controller->insertAsset($data);
-                // $success = call_user_func_array([$controller, $actions['create']], $data);
-                // sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
+                $success = $controller->{$actions['create']}($data, $file);
+                sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
                 break;
 
             case 'PUT':
-                $data = getJsonInput();
+                $data = json_decode(file_get_contents('php://input'), true);
                 if (!isset($data['id']) || empty($data['id'])) 
                     sendJsonResponse(["error" => "Missing 'id' field for update"], 400);
                 
@@ -150,5 +140,3 @@ function handleRequest($controller, $actions) {
         sendJsonResponse(["error" => $e->getMessage()], 500);
     }
 }
-
-
