@@ -23,6 +23,8 @@ class BorrowedAssetsController extends Controller
                         a.sub_category_id,
                         cat.category_name,
                         s.sub_category_name,
+                        a.type_id,
+                        type.type_name,
                         a.asset_name,
                         t.date_borrowed,
                         t.due_date,
@@ -36,6 +38,7 @@ class BorrowedAssetsController extends Controller
                     LEFT JOIN un_company_departments AS d ON u.department_id = d.department_id
                     LEFT JOIN un_companies AS comp ON u.company_id = comp.company_id
                     JOIN itam_asset AS a ON t.asset_id = a.asset_id
+                    LEFT JOIN itam_asset_type AS type ON a.type_id = type.type_id
                     LEFT JOIN itam_asset_category AS cat ON a.category_id = cat.category_id
                     LEFT JOIN itam_asset_sub_category AS s ON a.sub_category_id = s.sub_category_id
                     LEFT JOIN itam_asset_condition AS c ON t.asset_condition_id = c.asset_condition_id
