@@ -43,11 +43,11 @@ try {
             break;
 
         case 'POST':
-            $data = (array) json_decode($_POST['data'], true);
-            if (isset($data['asset_id'], $data['user_id'], $data['issuance_date'], $data['status_id'])) {
+            $data = getJsonInput();
+            if (isset($data['asset_id'], $data['user_id'], $data['issuance_date'], $data['pullout_date'], $data['status_id'])) {
                 $remarks = $data['remarks'] ?? null; // Allow remarks to be null
                 $result = $assetIssuance->addAssetIssuance(
-                    $data['asset_id'], $data['user_id'], $data['issuance_date'], $data['status_id'], $remarks
+                    $data['asset_id'], $data['user_id'], $data['issuance_date'], $data['pullout_date'], $data['status_id']
                 );
                 sendJsonResponse($result);
             } else {
@@ -57,10 +57,10 @@ try {
 
         case 'PUT':
             $data = getJsonInput();
-            if (isset($data['issuance_id'], $data['asset_id'], $data['user_id'], $data['issuance_date'], $data['status_id'])) {
+            if (isset($data['issuance_id'], $data['asset_id'], $data['user_id'], $data['issuance_date'], $data['pullout_date'], $data['status_id'])) {
                 $remarks = $data['remarks'] ?? null; // Allow remarks to be null
                 $result = $assetIssuance->updateAssetIssuance(
-                    $data['issuance_id'], $data['asset_id'], $data['user_id'], $data['issuance_date'], $data['status_id'], $remarks
+                    $data['issuance_id'], $data['asset_id'], $data['user_id'], $data['issuance_date'], $data['pullout_date'], $data['status_id']
                 );
                 sendJsonResponse($result);
             } else {
