@@ -41,7 +41,7 @@ try {
             break;
 
         case 'POST':
-            $data = (array) json_decode($_POST['data']);
+            $data = getJsonInput();
             if (isset($data['user_id'], $data['asset_id'], $data['issue'], $data['remarks'], $data['date_reported'], $data['urgency_id'], $data['repair_start_date'], $data['repair_completion_date'], $data['status_id'], $data['repair_cost'])) {
                 $result = $repairRequests->addRepairRequest(
                     $data['user_id'], $data['asset_id'], $data['issue'], $data['remarks'], 
@@ -56,9 +56,13 @@ try {
 
         case 'PUT':
             $data = getJsonInput();
-            if (isset($data['repair_request_id'], $data['user_id'], $data['remarks'], $data['repair_start_date'], $data['repair_completion_date'], $data['status_id'], $data['repair_cost'])) {
+            if (isset($data['repair_request_id'], $data['user_id'],  $data['repair_start_date'], $data['repair_completion_date'], $data['status_id'], $data['repair_cost'])) {
+                // Automatically set completion date if status is 'Completed'
+                if ($data['status_id'] == '5' && empty($data['repair_completion_date'])) {
+                    $data['repair_completion_date'] = date('Y-m-d H:i:s');
+                }
                 $result = $repairRequests->updateRepairRequest(
-                    $data['repair_request_id'], $data['user_id'], $data['remarks'], 
+                    $data['repair_request_id'], $data['user_id'], isset($data['remarks']) ? $data['remarks'] : null, 
                     $data['repair_start_date'], $data['repair_completion_date'], 
                     $data['status_id'], $data['repair_cost']
                 );
