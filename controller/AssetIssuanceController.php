@@ -71,12 +71,12 @@ class AssetIssuanceController extends Controller
     /**
      * Add a new asset issuance record
      */
-    function addAssetIssuance($asset_id, $user_id, $issuance_date, $pullout_date, $status_id)
+    function addAssetIssuance($asset_id, $user_id, $issuance_date, $status_id)
     {
         try {
-            $this->setStatement("INSERT INTO itam_asset_issuance (asset_id, user_id, issuance_date, pullout_date, status_id)
+            $this->setStatement("INSERT INTO itam_asset_issuance (asset_id, user_id, issuance_date, status_id)
                                  VALUES (?, ?, ?, ?, ?)");
-            $success = $this->statement->execute([$asset_id, $user_id, $issuance_date, $pullout_date, $status_id]);
+            $success = $this->statement->execute([$asset_id, $user_id, $issuance_date, $status_id]);
 
             return ["message" => $success ? "Issuance record added successfully" : "Failed to add record"];
         } catch (Exception $e) {
@@ -87,13 +87,13 @@ class AssetIssuanceController extends Controller
     /**
      * Update an existing asset issuance record
      */
-    function updateAssetIssuance($issuance_id, $asset_id, $user_id, $issuance_date, $pullout_date, $status_id)
+    function updateAssetIssuance($issuance_id, $asset_id, $user_id, $pullout_date, $status_id)
     {
         try {
             $this->setStatement("UPDATE itam_asset_issuance 
-                                 SET asset_id = ?, user_id = ?, issuance_date = ?, pullout_date = ?, status_id = ?
+                                 SET asset_id = ?, user_id = ?, pullout_date = ?, status_id = ?
                                  WHERE issuance_id = ?");
-            $success = $this->statement->execute([$asset_id, $user_id, $issuance_date, $pullout_date, $status_id, $issuance_id]);
+            $success = $this->statement->execute([$asset_id, $user_id, $pullout_date, $status_id, $issuance_id]);
 
             return ["message" => $success ? "Updated successfully" : "Update failed"];
         } catch (Exception $e) {

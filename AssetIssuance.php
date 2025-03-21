@@ -37,8 +37,8 @@ function getJsonInput() {
 $assetIssuance = new AssetIssuanceController();
 $method = $_SERVER['REQUEST_METHOD'];
 $resource = $_GET['resource'] ?? null;
-$resource = $_POST['resource'] ?? null;
-$resource = $_PUT['resource'] ?? null;
+// $resource = $_POST['resource'] ?? null;
+// $resource = $_PUT['resource'] ?? null;
 
 try {
     switch ($method) {
@@ -53,10 +53,10 @@ try {
 
         case 'POST':
             $data = getJsonInput();
-            if (isset($data['asset_id'], $data['user_id'], $data['issuance_date'], $data['pullout_date'], $data['status_id'])) {
-                $remarks = $data['remarks'] ?? null; // Allow remarks to be null
+            if (isset($data['asset_id'], $data['user_id'], $data['issuance_date'], $data['status_id'])) {
+                $remarks = $data['remarks'] ?? null;
                 $result = $assetIssuance->addAssetIssuance(
-                    $data['asset_id'], $data['user_id'], $data['issuance_date'], $data['pullout_date'], $data['status_id']
+                    $data['asset_id'], $data['user_id'], $data['issuance_date'], $data['status_id']
                 );
                 sendJsonResponse($result);
             } else {
@@ -66,10 +66,10 @@ try {
 
         case 'PUT':
             $data = getJsonInput();
-            if (isset($data['issuance_id'], $data['asset_id'], $data['user_id'], $data['issuance_date'], $data['pullout_date'], $data['status_id'])) {
+            if (isset($data['issuance_id'], $data['asset_id'], $data['user_id'], $data['pullout_date'], $data['status_id'])) {
                 $remarks = $data['remarks'] ?? null; // Allow remarks to be null
                 $result = $assetIssuance->updateAssetIssuance(
-                    $data['issuance_id'], $data['asset_id'], $data['user_id'], $data['issuance_date'], $data['pullout_date'], $data['status_id']
+                    $data['issuance_id'], $data['asset_id'], $data['user_id'], $data['pullout_date'], $data['status_id']
                 );
                 sendJsonResponse($result);
             } else {
