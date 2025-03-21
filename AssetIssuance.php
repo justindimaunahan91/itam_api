@@ -1,8 +1,15 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
-header("Access-Control-Allow-Headers: Origin, Content-Type");
+header("Access-Control-Allow-Origin: *"); // Allow all origins
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); // Allow specific methods
+header("Access-Control-Allow-Headers: Content-Type, Authorization"); // Allow necessary headers
+header("Content-Type: application/json");
 
+
+// Handle OPTIONS request (Preflight)
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 require __DIR__ . '/controller/AssetIssuanceController.php';
 
 /**
@@ -30,6 +37,8 @@ function getJsonInput() {
 $assetIssuance = new AssetIssuanceController();
 $method = $_SERVER['REQUEST_METHOD'];
 $resource = $_GET['resource'] ?? null;
+$resource = $_POST['resource'] ?? null;
+$resource = $_PUT['resource'] ?? null;
 
 try {
     switch ($method) {

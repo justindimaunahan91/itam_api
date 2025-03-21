@@ -1,14 +1,20 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Origin, Content-Type, Authorization, X-Request-With");
-header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: *"); // Allow all origins
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); // Allow specific methods
+header("Access-Control-Allow-Headers: Content-Type, Authorization"); // Allow necessary headers
+header("Content-Type: application/json");
 
-require __DIR__ . '/controller/RepairRequestController.php';
 
+// Handle OPTIONS request (Preflight)
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 /**
  * Send JSON response with HTTP status code
  */
+
+ require __DIR__ . '/controller/RepairRequestController.php';
 function sendJsonResponse($data, $status = 200) {
     http_response_code($status);
     header('Content-Type: application/json');
