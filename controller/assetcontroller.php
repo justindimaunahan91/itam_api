@@ -65,8 +65,8 @@ class Asset extends Controller
             }
         
             // Insert asset with file path
-            $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, availability_status, location, specifications, asset_amount, warranty_duration, aging, warranty_due_date, purchase_date, notes, file) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, availability_status, location, specifications, asset_amount, warranty_duration, aging, warranty_due_date, purchase_date, notes, file, Insurance) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
             $success = $this->statement->execute([
                 $asset_name, $serial_number, $brand, $category_id, 
@@ -74,7 +74,7 @@ class Asset extends Controller
                 $type_id === "" ? null : $type_id, $availability_status_id, 
                 $location, $specifications, $asset_amount, 
                 $warranty_duration, 0, $warranty_due_date, 
-                $purchase_date, $notes, $filePath
+                $purchase_date, $notes, $filePath, $Insurance === "" ? null : $Insurance
             ]);
         
             $this->sendJsonResponse(["message" => $success ? "Asset added successfully" : "Failed to add asset"], $success ? 201 : 500);
