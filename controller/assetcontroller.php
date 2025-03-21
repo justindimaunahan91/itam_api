@@ -59,7 +59,6 @@ class Asset extends Controller
         if ($category_id === 1) {
             $asset_name = substr($asset_name, 0, 2) . "-" . $category_id . str_pad($count, 4, "0", STR_PAD_LEFT);
         } else {
-
             $subcategory_item = $this->retrieveOneSubCategory($sub_category_id);
             $subcategory_code = $subcategory_item->code;
             $asset_name = $subcategory_code . "-" . $category_id;
