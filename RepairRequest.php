@@ -1,7 +1,8 @@
 <?php
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
-header("Access-Control-Allow-Headers: Origin, Content-Type");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Origin, Content-Type, Authorization, X-Request-With");
+header('Content-Type: application/json');
 
 require __DIR__ . '/controller/RepairRequestController.php';
 
@@ -56,14 +57,15 @@ try {
 
         case 'PUT':
             $data = getJsonInput();
-            if (isset($data['repair_request_id'], $data['user_id'],  $data['repair_start_date'], $data['repair_completion_date'], $data['status_id'], $data['repair_cost'])) {
+            var_dump($data);
+            if (isset($data['repair_request_id'], $data['user_id'], $data['repair_completion_date'], $data['status_id'], $data['repair_cost'])) {
                 // Automatically set completion date if status is 'Completed'
                 if ($data['status_id'] == '5' && empty($data['repair_completion_date'])) {
                     $data['repair_completion_date'] = date('Y-m-d H:i:s');
                 }
                 $result = $repairRequests->updateRepairRequest(
                     $data['repair_request_id'], $data['user_id'], isset($data['remarks']) ? $data['remarks'] : null, 
-                    $data['repair_start_date'], $data['repair_completion_date'], 
+                     $data['repair_completion_date'], 
                     $data['status_id'], $data['repair_cost']
                 );
                 sendJsonResponse($result);

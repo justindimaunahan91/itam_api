@@ -108,13 +108,13 @@ class RepairRequestController extends Controller {
     /**
      * Update an existing repair request
      */
-    function updateRepairRequest($repair_request_id, $user_id, $remarks, $repair_start_date, $repair_completion_date, $status_id, $repair_cost) {
+    function updateRepairRequest($repair_request_id, $user_id, $remarks, $repair_completion_date, $status_id, $repair_cost) {
         try {
             $sql = "UPDATE itam_asset_repair_request
-                    SET user_id = ?, remarks = ?, repair_start_date = ?, repair_completion_date = ?, status_id = ?, repair_cost = ?
+                    SET user_id = ?, remarks = ?, repair_completion_date = ?, status_id = ?, repair_cost = ?
                     WHERE repair_request_id = ?";
             $this->setStatement($sql);
-            $success = $this->statement->execute([$user_id, $remarks, $repair_start_date, $repair_completion_date, $status_id, $repair_cost, $repair_request_id]);
+            $success = $this->statement->execute([$user_id, $remarks, $repair_completion_date, $status_id, $repair_cost, $repair_request_id]);
 
             return ["message" => $success ? "Repair request updated successfully" : "Update failed"];
         } catch (Exception $e) {
