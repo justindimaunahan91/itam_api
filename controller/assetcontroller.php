@@ -51,19 +51,30 @@ class Asset extends Controller
             // }
         
             // Generate asset name
-            $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? and category_id = ? and type_id = ?");
-            $this->statement->execute([$sub_category_id, $category_id, $type_id]);
-            $count = $this->statement->fetchColumn(0);
-            $count += 1;
-            $subcategory_item = $this->retrieveOneSubCategory($sub_category_id);
-            $subcategory_code = $subcategory_item->code;
-            $asset_name = $subcategory_code . "-" . $category_id;
-            if ($type_id === "") {
-                $asset_name .= str_pad($count, 4, "0", STR_PAD_LEFT);
-            } else {
-                $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
-            }
-        
+            // Generate asset name
+if ($category_id == 1) { // External assets (No subcategory or type)
+    $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE category_id = ?");
+    $this->statement->execute([$category_id]);
+    $count = $this->statement->fetchColumn(0);
+    $count += 1;
+    $asset_name = $category_id . str_pad($count, 4, "0", STR_PAD_LEFT);
+} else { // Internal assets (category_id != 1)
+    $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? and category_id = ? and type_id = ?");
+    $this->statement->execute([$sub_category_id, $category_id, $type_id]);
+    $count = $this->statement->fetchColumn(0);
+    $count += 1;
+
+    $subcategory_item = $this->retrieveOneSubCategory($sub_category_id);
+    $subcategory_code = $subcategory_item->code;
+    $asset_name = $subcategory_code . "-" . $category_id;
+
+    if ($type_id === "") {
+        $asset_name .= str_pad($count, 4, "0", STR_PAD_LEFT);
+    } else {
+        $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
+    }
+}
+            
             // Insert asset with file path
             $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, status_id, location, specifications, asset_amount, warranty_duration, aging, warranty_due_date, purchase_date, notes, insurance) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
