@@ -33,6 +33,9 @@ $borrowedAssets = new BorrowedAssetsController();
 // Handle API Requests
 $method = $_SERVER['REQUEST_METHOD'];
 $resource = $_GET['resource'] ?? null;
+$resource = $_POST['resource'] ?? null;
+$resource = $_PUT['resource'] ?? null;
+
 
 try {
     switch ($method) {
