@@ -33,22 +33,22 @@ class Asset extends Controller
         }
     
 
-        function insertAsset($data, $file)
+        function insertAsset($data)
         {
             extract($data);
         
             // Handle file upload
-            $filePath = null;
-            if ($file && $file['error'] === UPLOAD_ERR_OK) {
-                $uploadDir = __DIR__ . "/uploads/";
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
-                }
+            // $filePath = null;
+            // if ($file && $file['error'] === UPLOAD_ERR_OK) {
+            //     $uploadDir = __DIR__ . "/uploads/";
+            //     if (!is_dir($uploadDir)) {
+            //         mkdir($uploadDir, 0777, true);
+            //     }
         
-                $fileName = time() . "_" . basename($file['name']);
-                $filePath = "uploads/" . $fileName;
-                move_uploaded_file($file['tmp_name'], $uploadDir . $fileName);
-            }
+            //     $fileName = time() . "_" . basename($file['name']);
+            //     $filePath = "uploads/" . $fileName;
+            //     move_uploaded_file($file['tmp_name'], $uploadDir . $fileName);
+            // }
         
             // Generate asset name
             $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? and category_id = ? and type_id = ?");
@@ -65,8 +65,8 @@ class Asset extends Controller
             }
         
             // Insert asset with file path
-            $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, availability_status, location, specifications, asset_amount, warranty_duration, aging, warranty_due_date, purchase_date, notes, file, Insurance) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, status_id, location, specifications, asset_amount, warranty_duration, aging, warranty_due_date, purchase_date, notes, insurance) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
             $success = $this->statement->execute([
                 $asset_name, $serial_number, $brand, $category_id, 
@@ -74,7 +74,7 @@ class Asset extends Controller
                 $type_id === "" ? null : $type_id, $availability_status_id, 
                 $location, $specifications, $asset_amount, 
                 $warranty_duration, 0, $warranty_due_date, 
-                $purchase_date, $notes, $filePath, $Insurance === "" ? null : $Insurance
+                $purchase_date, $notes, $insurance === "" ? null : $insurance
             ]);
         
             $this->sendJsonResponse(["message" => $success ? "Asset added successfully" : "Failed to add asset"], $success ? 201 : 500);
@@ -85,10 +85,10 @@ class Asset extends Controller
     {
         extract($data);
         $this->setStatement("UPDATE itam_asset 
-            SET asset_name = ?, serial_number = ?, category_id = ?, sub_category_id = ?, type_id = ?, asset_condition_id = ?, availability_status = ?, location = ?, specifications = ?, warranty_duration = ?, aging = ?, warranty_due_date = ?, purchase_date = ?, notes = ? 
+            SET asset_name = ?, serial_number = ?, category_id = ?, sub_category_id = ?, type_id = ?, asset_condition_id = ?, status_id = ?, location = ?, specifications = ?, warranty_duration = ?, aging = ?, warranty_due_date = ?, purchase_date = ?, notes = ? 
             WHERE asset_id = ?");
 
-        $success = $this->statement->execute([$asset_name, $serial_number, $category_id, $sub_category_id, $type_id, $asset_condition_id, $availability_status, $location, $specifications, $warranty_duration, $aging, $warranty_due_date, $purchase_date, $notes, $id]);
+        $success = $this->statement->execute([$asset_name, $serial_number, $category_id, $sub_category_id, $type_id, $asset_condition_id, $status_id, $location, $specifications, $warranty_duration, $aging, $warranty_due_date, $purchase_date, $notes, $id]);
 
         $this->sendJsonResponse(["message" => $success ? "Asset updated successfully" : "Failed to update asset"], $success ? 200 : 500);
     }
