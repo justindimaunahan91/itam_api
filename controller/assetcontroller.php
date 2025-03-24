@@ -34,12 +34,11 @@ class Asset extends Controller
     }
 
 
-    function insertAsset($data)
+    public function insertAsset($data)
     {
         extract($data);
 
         // Handle file upload
-        // $filePath = null;
         // if ($file && $file['error'] === UPLOAD_ERR_OK) {
         //     $uploadDir = __DIR__ . "/uploads/";
         //     if (!is_dir($uploadDir)) {
@@ -52,7 +51,7 @@ class Asset extends Controller
         // }
 
         // Generate asset name
-        $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? and category_id = ? and type_id = ?");
+          $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? and category_id = ? and type_id = ?");
         $this->statement->execute([$sub_category_id, $category_id, $type_id]);
         $count = $this->statement->fetchColumn(0);
         $count += 1;

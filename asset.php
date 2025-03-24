@@ -115,11 +115,22 @@ function handleRequest($controller, $actions) {
                 break;
             
             case 'POST':
-                
                 // Process form data and file upload
                 $data = $_POST['data'];
                 $data = (array) json_decode($data);
-                // $file = isset($_FILES['file']) ? $_FILES['file'] : null;
+                $file = isset($_FILES['file']) ? $_FILES['file'] : null;
+
+                if ($file && $file['error'] === UPLOAD_ERR_OK) {
+                    $uploadDir = __DIR__ . "/uploads/";
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0777, true);
+                    }
+
+                    $fileName = time() . "_" . basename($file['name']);
+                    $filePath = "uploads/" . $fileName;
+                    move_uploaded_file($file['tmp_name'], $uploadDir . $fileName);
+                }
+
                 $success = $controller->{$actions['create']}($data);
                 sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
                 break;
