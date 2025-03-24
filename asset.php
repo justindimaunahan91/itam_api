@@ -128,7 +128,8 @@ function handleRequest($controller, $actions) {
 
                     $fileName = time() . "_" . basename($file['name']);
                     $filePath = "uploads/" . $fileName;
-                    move_uploaded_file($file['tmp_name'], $uploadDir . $fileName);
+                    move_uploaded_file($file['tmp_name'], $filePath);
+                    $data["file"] = $filePath;
                 }
 
                 $success = $controller->{$actions['create']}($data);
