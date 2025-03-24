@@ -147,20 +147,34 @@ WHERE t.borrow_transaction_id = ?";
      * Mark a borrowed asset as returned.
      */
     public function returnBorrowedAsset($borrowTransactionId, $returnDate, $assetConditionId)
-    {
-        try {
-            $sql = "UPDATE itam_asset_transactions 
-                SET return_date = ?, asset_condition_id = ? 
+{
+    try {
+        // Fetch the date_borrowed for the given transaction
+        $this->setStatement("SELECT date_borrowed FROM itam_asset_transactions WHERE borrow_transaction_id = ?");
+        $this->statement->execute([$borrowTransactionId]);
+        $dateBorrowed = $this->statement->fetchColumn();
+
+        if (!$dateBorrowed) {
+            return ["error" => "Borrow transaction not found"];
+        }
+
+       
+        $duration = (new DateTime($returnDate))->diff(new DateTime($dateBorrowed))->days;
+
+        
+        $sql = "UPDATE itam_asset_transactions 
+                SET return_date = ?, asset_condition_id = ?, duration = ? 
                 WHERE borrow_transaction_id = ?";
 
-            $this->setStatement($sql);
-            $success = $this->statement->execute([$returnDate, $borrowTransactionId, $assetConditionId]);
+        $this->setStatement($sql);
+        $success = $this->statement->execute([$returnDate, $assetConditionId, $duration, $borrowTransactionId]);
 
-            return ["message" => $success ? "Asset marked as returned" : "Update failed"];
-        } catch (Exception $e) {
-            return ["error" => $e->getMessage()];
-        }
+        return ["message" => $success ? "Asset marked as returned" : "Update failed"];
+    } catch (Exception $e) {
+        return ["error" => $e->getMessage()];
     }
+}
+
 
     /**
      * Delete a borrowed asset transaction.
