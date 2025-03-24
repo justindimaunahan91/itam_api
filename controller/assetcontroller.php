@@ -41,7 +41,7 @@ class Asset extends Controller
 
         // Generate asset name
           $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? and category_id = ? and type_id = ?");
-        $this->statement->execute([$sub_category_id, $category_id, $type_id]);
+        $this->statement->execute([$sub_category_id === "" ? null : $sub_category_id, $category_id === "" ? null : $category_id, $type_id === "" ? null : $type_id]);
         $count = $this->statement->fetchColumn(0);
         $count += 1;
         if ($category_id === 1) {
