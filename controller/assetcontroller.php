@@ -5,7 +5,7 @@ class Asset extends Controller
     function retrieveAssets()
     {
         $this->setStatement("SELECT A.*, C.category_name, SC.sub_category_name, A.type_id, A.brand, T.type_name, 
-       CO.asset_condition_name, A.status_id, S.status_name 
+       CO.asset_condition_name, A.status_id, S.status_name,A.file 
 		FROM itam_asset A
 		LEFT JOIN itam_asset_category C ON A.category_id = C.category_id
 		LEFT JOIN itam_asset_sub_category SC ON A.sub_category_id = SC.sub_category_id
@@ -38,17 +38,6 @@ class Asset extends Controller
     {
         extract($data);
 
-        // Handle file upload
-        // if ($file && $file['error'] === UPLOAD_ERR_OK) {
-        //     $uploadDir = __DIR__ . "/uploads/";
-        //     if (!is_dir($uploadDir)) {
-        //         mkdir($uploadDir, 0777, true);
-        //     }
-
-        //     $fileName = time() . "_" . basename($file['name']);
-        //     $filePath = "uploads/" . $fileName;
-        //     move_uploaded_file($file['tmp_name'], $uploadDir . $fileName);
-        // }
 
         // Generate asset name
           $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? and category_id = ? and type_id = ?");
