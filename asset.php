@@ -143,21 +143,31 @@ function handleRequest($controller, $actions) {
                 // Check if inserting an asset
                 if ($actions['create'] === 'insertAsset') {
                     global $subCategoryController;
-
-                    // Check if sub-category exists, insert if not
-                    $subcategoryResult = $subCategoryController->insertSubCategory($data['category_id'], $data['sub_category_name']);
-
-                    if (isset($subcategoryResult['sub_category_id'])) {
-                        $data['sub_category_id'] = $subcategoryResult['sub_category_id'];
-                    } else {
-                        sendJsonResponse(["error" => "Failed to process sub-category"], 500);
+                
+                    // Ensure category_id exists
+                    if (!isset($data['category_id'])) {
+                        sendJsonResponse(["error" => "Missing category_id"], 400);
                     }
+                
+                    // Check if sub_category_name is provided, and verify if it exists
+                    if (!empty($data['sub_category_name'])) {
+                        $subcategoryResult = $subCategoryController->insertSubCategory(
+                            $data['category_id'], 
+                            $data['sub_category_name']
+                        );
+                
+                        if (isset($subcategoryResult['sub_category_id'])) {
+                            $data['sub_category_id'] = $subcategoryResult['sub_category_id'];
+                        } else {
+                            sendJsonResponse(["error" => "Failed to process sub-category"], 500);
+                        }
+                    }
+                    
+                    // Proceed with asset insertion
+                    $success = call_user_func([$controller, $actions['create']], $data);
+                    sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
                 }
-
-                // Proceed with asset insertion
-                $success = call_user_func([$controller, $actions['create']], $data);
-                sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
-                break;
+                
 
             case 'PUT':
                 $data = json_decode(file_get_contents('php://input'), true);

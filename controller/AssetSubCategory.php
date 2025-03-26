@@ -17,20 +17,26 @@ class AssetSubCategory extends Controller {
         $result = $this->statement->fetch();
         return $result;
     }
-    function insertSubCategory($category_id, $sub_category_name) {
+    function insertSubCategory($category_id, $sub_category_name = null) { 
         try {
-            // Check if the subcategory already exists
-            $this->setStatement("SELECT 1 FROM itam_asset_sub_category WHERE category_id = ? AND sub_category_name = ?");
-            $this->statement->execute([$category_id, $sub_category_name]);
-            $existingSubCategory = $this->statement->fetchColumn();
+            // Check if sub_category_name is provided
+            if ($sub_category_name) {
+                $this->setStatement("SELECT sub_category_id FROM itam_asset_sub_category WHERE category_id = ? AND sub_category_name = ?");
+                $this->statement->execute([$category_id, $sub_category_name]);
+                $existingSubCategory = $this->statement->fetchColumn();
     
-            if ($existingSubCategory) {
-                return ["message" => "Sub-category already exists"];
+                if ($existingSubCategory) {
+                    return ["message" => "Sub-category already exists", "sub_category_id" => $existingSubCategory];
+                }
+    
+                // Insert with sub_category_name
+                $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name) VALUES (?, ?)");
+                $success = $this->statement->execute([$category_id, $sub_category_name]);
+            } else {
+                // Insert only category_id if no sub_category_name
+                $this->setStatement("INSERT INTO itam_asset_sub_category (category_id) VALUES (?)");
+                $success = $this->statement->execute([$category_id]);
             }
-    
-            // Insert the new subcategory
-            $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name) VALUES (?, ?)");
-            $success = $this->statement->execute([$category_id, $sub_category_name]);
     
             return ["message" => $success ? "Sub-category added successfully" : "Failed to add sub-category"];
     
@@ -38,6 +44,7 @@ class AssetSubCategory extends Controller {
             return ["error" => $e->getMessage()];
         }
     }
+    
     
 
 
