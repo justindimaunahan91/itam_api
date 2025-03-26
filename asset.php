@@ -1,10 +1,9 @@
 <?php
 
-header("Access-Control-Allow-Origin: *"); // Allow all origins
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); // Allow specific methods
-header("Access-Control-Allow-Headers: Content-Type, Authorization"); // Allow necessary headers
+header("Access-Control-Allow-Origin: *"); 
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); 
+header("Access-Control-Allow-Headers: Content-Type, Authorization"); 
 header("Content-Type: application/json");
-
 
 // Handle OPTIONS request (Preflight)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -61,10 +60,12 @@ function sendJsonResponse($data, $status = 200) {
 
 // Instantiate controllers
 $assetController = new Asset();
+$subCategoryController = new AssetSubCategory();
+
 $controller = [  
     'asset'       => $assetController,
     'category'    => new AssetCategory(),
-    'subcategory' => new AssetSubCategory(),
+    'subcategory' => $subCategoryController,
     'type'        => new AssetType()
 ];
 
@@ -116,10 +117,17 @@ function handleRequest($controller, $actions) {
             
             case 'POST':
                 // Process form data and file upload
-                $data = $_POST['data'];
-                $data = (array) json_decode($data);
-                $file = isset($_FILES['file']) ? $_FILES['file'] : null;
+                if (!isset($_POST['data'])) {
+                    sendJsonResponse(["error" => "Invalid request, missing data"], 400);
+                }
 
+                $data = json_decode($_POST['data'], true);
+                if (!$data) {
+                    sendJsonResponse(["error" => "Invalid JSON input"], 400);
+                }
+
+                // Handle File Upload
+                $file = isset($_FILES['file']) ? $_FILES['file'] : null;
                 if ($file && $file['error'] === UPLOAD_ERR_OK) {
                     $uploadDir = __DIR__ . "/uploads/";
                     if (!is_dir($uploadDir)) {
@@ -132,7 +140,22 @@ function handleRequest($controller, $actions) {
                     $data["file"] = $filePath;
                 }
 
-                $success = $controller->{$actions['create']}($data);
+                // Check if inserting an asset
+                if ($actions['create'] === 'insertAsset') {
+                    global $subCategoryController;
+
+                    // Check if sub-category exists, insert if not
+                    $subcategoryResult = $subCategoryController->insertSubCategory($data['category_id'], $data['sub_category_name']);
+
+                    if (isset($subcategoryResult['sub_category_id'])) {
+                        $data['sub_category_id'] = $subcategoryResult['sub_category_id'];
+                    } else {
+                        sendJsonResponse(["error" => "Failed to process sub-category"], 500);
+                    }
+                }
+
+                // Proceed with asset insertion
+                $success = call_user_func([$controller, $actions['create']], $data);
                 sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
                 break;
 

@@ -17,13 +17,29 @@ class AssetSubCategory extends Controller {
         $result = $this->statement->fetch();
         return $result;
     }
-
-    // Insert a new sub-category
     function insertSubCategory($category_id, $sub_category_name) {
-        $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name) VALUES (?, ?)");
-        $success = $this->statement->execute([$category_id, $sub_category_name]);
-        $this->sendJsonResponse(["message" => $success ? "Sub-category added successfully" : "Failed to add sub-category"], $success ? 201 : 500);
+        try {
+            // Check if the subcategory already exists
+            $this->setStatement("SELECT 1 FROM itam_asset_sub_category WHERE category_id = ? AND sub_category_name = ?");
+            $this->statement->execute([$category_id, $sub_category_name]);
+            $existingSubCategory = $this->statement->fetchColumn();
+    
+            if ($existingSubCategory) {
+                return ["message" => "Sub-category already exists"];
+            }
+    
+            // Insert the new subcategory
+            $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name) VALUES (?, ?)");
+            $success = $this->statement->execute([$category_id, $sub_category_name]);
+    
+            return ["message" => $success ? "Sub-category added successfully" : "Failed to add sub-category"];
+    
+        } catch (Exception $e) {
+            return ["error" => $e->getMessage()];
+        }
     }
+    
+
 
     // Update an existing sub-category
     function updateSubCategory($sub_category_id, $category_id, $sub_category_name) {

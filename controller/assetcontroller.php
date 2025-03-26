@@ -24,14 +24,14 @@ class Asset extends Controller
         $result = $this->statement->fetch();
         $this->sendJsonResponse($result ?: ["error" => "Asset not found"], $result ? 200 : 404);
     }
-    // Retrieve a single sub-category by ID
-    function retrieveOneSubCategory($id)
-    {
-        $this->setStatement("SELECT * FROM itam_asset_sub_category WHERE sub_category_id = ?");
-        $this->statement->execute([$id]);
-        $result = $this->statement->fetch();
-        return $result;
-    }
+    // // Retrieve a single sub-category by ID
+    // function retrieveOneSubCategory($id)
+    // {
+    //     $this->setStatement("SELECT * FROM itam_asset_sub_category WHERE sub_category_id = ?");
+    //     $this->statement->execute([$id]);
+    //     $result = $this->statement->fetch();
+    //     return $result;
+    // }
 
 
     public function insertAsset($data)
