@@ -37,36 +37,61 @@ class Asset extends Controller
     public function insertAsset($data)
     {
         extract($data);
-
-
+    
+        // Ensure category_id exists
+        if (!isset($category_id)) {
+            $this->sendJsonResponse(["error" => "Missing category_id"], 400);
+        }
+    
+        // Handle subcategory validation (but do NOT insert if missing)
+        if (!empty($sub_category_name)) {
+            // Check if the subcategory exists
+            $this->setStatement("SELECT sub_category_id FROM itam_asset_sub_category WHERE category_id = ? AND sub_category_name = ?");
+            $this->statement->execute([$category_id, $sub_category_name]);
+            $sub_category_id = $this->statement->fetchColumn();
+    
+            if (!$sub_category_id) {
+                $this->sendJsonResponse(["error" => "Sub-category does not exist"], 400);
+            }
+        } else {
+            $sub_category_id = null; // If no sub-category name is provided, set to NULL
+        }
+    
         // Generate asset name
-          $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? and category_id = ? and type_id = ?");
-        $this->statement->execute([$sub_category_id === "" ? null : $sub_category_id, $category_id === "" ? null : $category_id, $type_id === "" ? null : $type_id]);
+        $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id = ?");
+        $this->statement->execute([$sub_category_id, $category_id, $type_id === "" ? null : $type_id]);
         $count = $this->statement->fetchColumn(0);
         $count += 1;
+    
         if ($category_id === 1) {
             $asset_name = substr($asset_name, 0, 2) . "-" . $category_id . str_pad($count, 4, "0", STR_PAD_LEFT);
         } else {
-            $subcategory_item = $this->retrieveOneSubCategory($sub_category_id);
-            $subcategory_code = $subcategory_item->code;
-            $asset_name = $subcategory_code . "-" . $category_id;
+            if ($sub_category_id) {
+                $this->setStatement("SELECT code FROM itam_asset_sub_category WHERE sub_category_id = ?");
+                $this->statement->execute([$sub_category_id]);
+                $subcategory_code = $this->statement->fetchColumn() ?: "SC"; // Default if missing
+                $asset_name = $subcategory_code . "-" . $category_id;
+            } else {
+                $asset_name = "GEN-" . $category_id; // Generic if no sub-category
+            }
+    
             if ($type_id === "") {
                 $asset_name .= str_pad($count, 4, "0", STR_PAD_LEFT);
             } else {
                 $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
             }
         }
-
+    
         // Insert asset with file path
         $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, status_id, location, specifications, asset_amount, warranty_duration, aging, warranty_due_date, purchase_date, notes, insurance, file) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
+    
         $success = $this->statement->execute([
             $asset_name,
             $serial_number,
             $brand,
             $category_id,
-            $sub_category_id === "" ? null : $sub_category_id,
+            $sub_category_id, // Now optional
             4,
             $type_id === "" ? null : $type_id,
             $availability_status_id,
@@ -81,10 +106,10 @@ class Asset extends Controller
             $insurance === "" ? null : $insurance,
             $file
         ]);
-
+    
         $this->sendJsonResponse(["message" => $success ? "Asset added successfully" : "Failed to add asset"], $success ? 201 : 500);
     }
-
+    
 
     function updateAsset($id, $data)
     {
