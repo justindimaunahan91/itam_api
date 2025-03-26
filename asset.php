@@ -114,27 +114,39 @@ function handleRequest($controller, $actions) {
                 sendJsonResponse($result ?: ["error" => "No records found"], $result ? 200 : 404);
                 break;
             
-            case 'POST':
-                // Process form data and file upload
-                $data = $_POST['data'];
-                $data = (array) json_decode($data);
-                $file = isset($_FILES['file']) ? $_FILES['file'] : null;
-
-                if ($file && $file['error'] === UPLOAD_ERR_OK) {
-                    $uploadDir = __DIR__ . "/uploads/";
-                    if (!is_dir($uploadDir)) {
-                        mkdir($uploadDir, 0777, true);
+             case 'POST':
+                    $data = json_decode(file_get_contents('php://input'), true);
+                
+                    if (!$data) {
+                        sendJsonResponse(["error" => "Invalid JSON input"], 400);
                     }
-
-                    $fileName = time() . "_" . basename($file['name']);
-                    $filePath = "uploads/" . $fileName;
-                    move_uploaded_file($file['tmp_name'], $filePath);
-                    $data["file"] = $filePath;
-                }
-
-                $success = $controller->{$actions['create']}($data);
-                sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
-                break;
+                
+                    if ($_GET['resource'] === "subcategory") {
+                        if (!isset($data['category_id']) || !isset($data['sub_category_name'])) {
+                            sendJsonResponse(["error" => "Missing required fields"], 400);
+                        }
+                        
+                        $result = $controller->{$actions['create']}($data['category_id'], $data['sub_category_name']);
+                        sendJsonResponse($result, isset($result['error']) ? 500 : 201);
+                    } else {
+                        // Handle file uploads for assets
+                        $file = $_FILES['file'] ?? null;
+                        if ($file && $file['error'] === UPLOAD_ERR_OK) {
+                            $uploadDir = __DIR__ . "/uploads/";
+                            if (!is_dir($uploadDir)) {
+                                mkdir($uploadDir, 0777, true);
+                            }
+                
+                            $fileName = time() . "_" . basename($file['name']);
+                            $filePath = "uploads/{$fileName}";
+                            move_uploaded_file($file['tmp_name'], $filePath);
+                            $data["file"] = $filePath;
+                        }
+                
+                        $success = $controller->{$actions['create']}($data);
+                        sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
+                    }
+                    break;
 
             case 'PUT':
                 $data = json_decode(file_get_contents('php://input'), true);
