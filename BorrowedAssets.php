@@ -65,15 +65,32 @@ try {
             }
             break;
 
-        case 'PUT':
-            $data = getJsonInput();
-            if (isset($data['borrow_transaction_id'])) {
-                $result = $borrowedAssets->updateBorrowedAsset($data['borrow_transaction_id'], $data['due_date'] ?? null, $data['remarks'] ?? null);
-                sendJsonResponse($result);
-            } else {
-                sendJsonResponse(["error" => "Missing 'borrow_transaction_id'"], 400);
-            }
-            break;
+            case 'PUT':
+                $data = getJsonInput();
+                
+                if (isset($data['borrow_transaction_id'])) {
+                    if (isset($data['return_date']) && isset($data['asset_condition_id'])) {
+                        // Mark asset as returned
+                        $result = $borrowedAssets->returnBorrowedAsset(
+                            $data['borrow_transaction_id'], 
+                            $data['return_date'], 
+                            $data['asset_condition_id']
+                        );
+                    } else {
+                        // Update borrowed asset details (due_date or remarks)
+                        $result = $borrowedAssets->updateBorrowedAsset(
+                            $data['borrow_transaction_id'], 
+                            $data['due_date'] ?? null, 
+                            $data['remarks'] ?? null
+                        );
+                    }
+            
+                    sendJsonResponse($result);
+                } else {
+                    sendJsonResponse(["error" => "Missing 'borrow_transaction_id'"], 400);
+                }
+                break;
+            
 
         case 'DELETE':
             if (isset($_GET['id'])) {
