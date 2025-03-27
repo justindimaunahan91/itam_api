@@ -41,7 +41,7 @@ class Asset extends Controller
     extract($data);
 
      // Ensure category_id exists
-     if (!isset($category_id)) {
+    if (!isset($category_id)) {
         $this->sendJsonResponse(["error" => "Missing category_id"], 400);
     }
 
@@ -95,7 +95,8 @@ class Asset extends Controller
             $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
         }
     }
-    // Insert asset with file path
+
+    // Insert asset with generated asset name and category settings
     $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, status_id, location, specifications, asset_amount, warranty_duration, aging, warranty_due_date, purchase_date, notes, insurance, file) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
@@ -103,7 +104,7 @@ class Asset extends Controller
         $asset_name,
         $serial_number,
         $brand,
-        $category_id,
+        $category_id, // Store original category_id
         $sub_category_id, // Now optional
         4,
         $type_id === "" ? null : $type_id,
