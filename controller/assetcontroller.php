@@ -63,31 +63,32 @@ class Asset extends Controller
         $sub_category_id = null; // If no subcategory name is provided, set to NULL
     }
 
-    // Generate asset name
-    $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id = ?");
-    $this->statement->execute([$sub_category_id, $category_id, $type_id === "" ? null : $type_id]);
-    $count = $this->statement->fetchColumn(0);
-    $count += 1;
 
-    if ($category_id === 1) {
-        $asset_name = substr($asset_name, 0, 2) . "-" . $category_id . str_pad($count, 4, "0", STR_PAD_LEFT);
-    } else {
-        if ($sub_category_id) {
-            $this->setStatement("SELECT code FROM itam_asset_sub_category WHERE sub_category_id = ?");
-            $this->statement->execute([$sub_category_id]);
-            $subcategory_code = $this->statement->fetchColumn() ?: "SC"; // Default if missing
-            $asset_name = $subcategory_code . "-" . $category_id;
-        } else {
-            $asset_name = "GEN-" . $category_id; // Generic if no sub-category
-        }
+   // Generate asset name using the same method as the other function
+   $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id = ?");
+   $this->statement->execute([$sub_category_id, $category_for_asset_name, $type_id === "" ? null : $type_id]);
+   $count = $this->statement->fetchColumn(0);
+   $count += 1;
 
-        if ($type_id === "") {
-            $asset_name .= str_pad($count, 4, "0", STR_PAD_LEFT);
-        } else {
-            $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
-        }
-    }
+   if ($category_id === 1) {
+       // If category_id is 1, use original category_id and standard format
+       $asset_name = substr($asset_name, 0, 2) . "-" . $category_id . str_pad($count, 4, "0", STR_PAD_LEFT);
+   } else {
+       if ($sub_category_id) {
+           $this->setStatement("SELECT code FROM itam_asset_sub_category WHERE sub_category_id = ?");
+           $this->statement->execute([$sub_category_id]);
+           $subcategory_code = $this->statement->fetchColumn() ?: "GEN"; // Default if missing
+           $asset_name = $subcategory_code . "-" . $category_for_asset_name;
+       } else {
+           $asset_name = "GEN-" . $category_for_asset_name; // Generic if no sub-category
+       }
 
+       if ($type_id === "") {
+           $asset_name .= str_pad($count, 4, "0", STR_PAD_LEFT);
+       } else {
+           $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
+       }
+   }
     // Insert asset with file path
     $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, status_id, location, specifications, asset_amount, warranty_duration, aging, warranty_due_date, purchase_date, notes, insurance, file) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
