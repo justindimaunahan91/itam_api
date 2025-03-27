@@ -40,63 +40,55 @@ class Asset extends Controller
 {
     extract($data);
 
-     // Ensure category_id exists
+    // Ensure category_id exists
     if (!isset($category_id)) {
         $this->sendJsonResponse(["error" => "Missing category_id"], 400);
     }
 
     // Handle subcategory: Check if it exists, insert if missing
     if (!empty($sub_category_name)) {
-        $this->setStatement("SELECT sub_category_id, code FROM itam_asset_sub_category WHERE category_id = ? AND sub_category_name = ?");
+        $this->setStatement("SELECT sub_category_id FROM itam_asset_sub_category WHERE category_id = ? AND sub_category_name = ?");
         $this->statement->execute([$category_id, $sub_category_name]);
-        $subcategory = $this->statement->fetch(PDO::FETCH_ASSOC);
-        
-        if ($subcategory) {
-            $sub_category_id = $subcategory['sub_category_id'];
-            $subcategory_code = $subcategory['code'];
-        } else {
-            // Generate unique subcategory code
-            $this->setStatement("SELECT COUNT(*) as count FROM itam_asset_sub_category WHERE category_id = ?");
-            $this->statement->execute([$category_id]);
-            $count = $this->statement->fetchColumn(0);
-            $count += 1;
+        $sub_category_id = $this->statement->fetchColumn();
 
-            $subcategory_code = strtoupper(substr($sub_category_name, 0, 3)) . str_pad($count, 3, "0", STR_PAD_LEFT);
+        if (!$sub_category_id) {
+            // Subcategory does not exist, insert it
+            $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name) VALUES (?, ?)");
+            $this->statement->execute([$category_id, $sub_category_name]);
 
-            // Insert new subcategory with generated code
-            $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name, code) VALUES (?, ?, ?)");
-            $this->statement->execute([$category_id, $sub_category_name, $subcategory_code]);
-
-            // Retrieve the newly inserted sub_category_id
+            // Retrieve the newly inserted sub_category_id from the last inserted record
             $sub_category_id = $this->statement->lastInsertId();
         }
     } else {
-        $sub_category_id = null;
-        $subcategory_code = "GEN";
+        $sub_category_id = null; // If no subcategory name is provided, set to NULL
     }
 
-    // Ensure category_id is set to 2 for asset name generation but keeps original for database
-    $category_for_asset_name = ($category_id == 1) ? 1 : 2;
 
-    // Generate asset name
-    $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id = ?");
-    $this->statement->execute([$sub_category_id, $category_for_asset_name, $type_id === "" ? null : $type_id]);
-    $count = $this->statement->fetchColumn(0);
-    $count += 1;
+   // Generate asset name using the same method as the other function
+   $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id = ?");
+   $this->statement->execute([$sub_category_id, $category_id, $type_id === "" ? null : $type_id]);
+   $count = $this->statement->fetchColumn(0);
+   $count += 1;
 
-    if ($category_id === 1) {
-        $asset_name = substr($subcategory_code, 0, 2) . "-" . $category_id . str_pad($count, 4, "0", STR_PAD_LEFT);
-    } else {
-        $asset_name = $subcategory_code . "-" . $category_for_asset_name;
+   if ($category_id === 1) {
+       $asset_name = substr($asset_name, 0, 2) . "-" . $category_id . str_pad($count, 4, "0", STR_PAD_LEFT);
+   } else {
+       if ($sub_category_id) {
+           $this->setStatement("SELECT code FROM itam_asset_sub_category WHERE sub_category_id = ?");
+           $this->statement->execute([$sub_category_id]);
+           $subcategory_code = $this->statement->fetchColumn() ?: "SC"; // Default if missing
+           $asset_name = $subcategory_code . "-" . $category_id;
+       } else {
+           $asset_name = "GEN-" . $category_id; // Generic if no sub-category
+       }
 
-        if ($type_id === "") {
-            $asset_name .= str_pad($count, 4, "0", STR_PAD_LEFT);
-        } else {
-            $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
-        }
-    }
-
-    // Insert asset with generated asset name and category settings
+       if ($type_id === "") {
+           $asset_name .= str_pad($count, 4, "0", STR_PAD_LEFT);
+       } else {
+           $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
+       }
+   }
+    // Insert asset with file path
     $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, status_id, location, specifications, asset_amount, warranty_duration, aging, warranty_due_date, purchase_date, notes, insurance, file) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
@@ -104,7 +96,7 @@ class Asset extends Controller
         $asset_name,
         $serial_number,
         $brand,
-        $category_id, // Store original category_id
+        $category_id,
         $sub_category_id, // Now optional
         4,
         $type_id === "" ? null : $type_id,
