@@ -40,8 +40,8 @@ class Asset extends Controller
 {
     extract($data);
 
-      // Ensure category_id exists
-    if (!isset($category_id)) {
+     // Ensure category_id exists
+     if (!isset($category_id)) {
         $this->sendJsonResponse(["error" => "Missing category_id"], 400);
     }
 
@@ -55,18 +55,15 @@ class Asset extends Controller
             $sub_category_id = $subcategory['sub_category_id'];
             $subcategory_code = $subcategory['code'];
         } else {
-            // Generate subcategory code (First 2 uppercase letters)
-            $base_code = strtoupper(substr($sub_category_name, 0, 2));
-
-            // Check if the code already exists
-            $this->setStatement("SELECT COUNT(*) FROM itam_asset_sub_category WHERE code LIKE ?");
-            $this->statement->execute([$base_code . '%']);
+            // Generate unique subcategory code
+            $this->setStatement("SELECT COUNT(*) as count FROM itam_asset_sub_category WHERE category_id = ?");
+            $this->statement->execute([$category_id]);
             $count = $this->statement->fetchColumn(0);
+            $count += 1;
 
-            // Append a number if duplicate exists (e.g., LP1, LP2, ...)
-            $subcategory_code = ($count > 0) ? $base_code . ($count + 1) : $base_code;
+            $subcategory_code = strtoupper(substr($sub_category_name, 0, 3)) . str_pad($count, 3, "0", STR_PAD_LEFT);
 
-            // Insert new subcategory
+            // Insert new subcategory with generated code
             $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name, code) VALUES (?, ?, ?)");
             $this->statement->execute([$category_id, $sub_category_name, $subcategory_code]);
 
@@ -75,17 +72,30 @@ class Asset extends Controller
         }
     } else {
         $sub_category_id = null;
-        $subcategory_code = "GN"; // Default code if no subcategory
+        $subcategory_code = "GEN";
     }
 
-    // Generate asset name: LP-20001
-    $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ?");
-    $this->statement->execute([$sub_category_id, $category_id]);
-    $count = $this->statement->fetchColumn(0) + 1;
+    // Ensure category_id is set to 2 for asset name generation but keeps original for database
+    $category_for_asset_name = ($category_id == 1) ? 1 : 2;
 
-    $asset_name = $subcategory_code . "-" . $category_id . str_pad($count, 3, "0", STR_PAD_LEFT);
+    // Generate asset name
+    $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id = ?");
+    $this->statement->execute([$sub_category_id, $category_for_asset_name, $type_id === "" ? null : $type_id]);
+    $count = $this->statement->fetchColumn(0);
+    $count += 1;
 
-    // Insert asset
+    if ($category_id === 1) {
+        $asset_name = substr($subcategory_code, 0, 2) . "-" . $category_id . str_pad($count, 4, "0", STR_PAD_LEFT);
+    } else {
+        $asset_name = $subcategory_code . "-" . $category_for_asset_name;
+
+        if ($type_id === "") {
+            $asset_name .= str_pad($count, 4, "0", STR_PAD_LEFT);
+        } else {
+            $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
+        }
+    }
+    // Insert asset with file path
     $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, status_id, location, specifications, asset_amount, warranty_duration, aging, warranty_due_date, purchase_date, notes, insurance, file) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
