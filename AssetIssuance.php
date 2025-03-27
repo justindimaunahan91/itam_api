@@ -52,7 +52,7 @@ try {
             break;
 
         case 'POST':
-            $data = getJsonInput();
+            $data = (array) json_decode($_POST['data']);
             if (isset($data['asset_id'], $data['user_id'], $data['issuance_date'], $data['status_id'])) {
                 $remarks = $data['remarks'] ?? null;
                 $result = $assetIssuance->addAssetIssuance(
