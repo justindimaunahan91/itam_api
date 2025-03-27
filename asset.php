@@ -149,19 +149,19 @@ function handleRequest($controller, $actions) {
                         sendJsonResponse(["error" => "Missing category_id"], 400);
                     }
                 
-                    // Check if sub_category_name is provided, and verify if it exists
-                    if (!empty($data['sub_category_name'])) {
-                        $subcategoryResult = $subCategoryController->insertSubCategory(
-                            $data['category_id'], 
-                            $data['sub_category_name']
-                        );
+                    // // Check if sub_category_name is provided, and verify if it exists
+                    // if (!empty($data['sub_category_name'])) {
+                    //     $subcategoryResult = $assetController->insertAsset(
+                    //         $data['category_id'], 
+                    //         $data['sub_category_name']
+                    //     );
                 
-                        if (isset($subcategoryResult['sub_category_id'])) {
-                            $data['sub_category_id'] = $subcategoryResult['sub_category_id'];
-                        } else {
-                            sendJsonResponse(["error" => "Failed to process sub-category"], 500);
-                        }
-                    }
+                    //     if (isset($subcategoryResult['sub_category_id'])) {
+                    //         $data['sub_category_id'] = $subcategoryResult['sub_category_id'];
+                    //     } else {
+                    //         sendJsonResponse(["error" => "Failed to process sub-category"], 500);
+                    //     }
+                    // }
                     
                     // Proceed with asset insertion
                     $success = call_user_func([$controller, $actions['create']], $data);
