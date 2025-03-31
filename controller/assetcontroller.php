@@ -51,6 +51,9 @@ class Asset extends Controller
             $this->statement->execute([$category_id, $sub_category_name, strtoupper(substr($sub_category_name, 0, 2))]);
             $sub_category_id = $this->connection->lastInsertId();
     }
+    if ($category_id == 2 && empty($sub_category_id)){
+        throw new Error("Di nagana");
+    }
 
    // Generate asset name using the same method as the other function
    $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id is NULL");
@@ -83,7 +86,7 @@ class Asset extends Controller
         $serial_number,
         $brand,
         $category_id,
-        $sub_category_id, // Now optional
+        empty($sub_category_id) ? NULL : $sub_category_id, // Now optional
         4,
         $type_id === "" ? null : $type_id,
         $availability_status_id,

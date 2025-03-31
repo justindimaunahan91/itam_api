@@ -17,6 +17,8 @@ class AssetIssuanceController extends Controller
                 a.sub_category_id,
                 cat.category_name,
                 sub.sub_category_name,
+                ty.type_name,
+                a.type_id,
                 i.user_id,
                 u.company_id,
                 u.department_id,
@@ -35,6 +37,7 @@ class AssetIssuanceController extends Controller
             LEFT JOIN un_companies AS comp ON u.company_id = comp.company_id
             LEFT JOIN un_company_departments AS d ON u.department_id = d.department_id
             LEFT JOIN itam_asset_category AS cat ON a.category_id = cat.category_id
+            LEFT JOIN itam_asset_type AS ty ON a.type_id = ty.type_id
             LEFT JOIN itam_asset_status AS s ON i.status_id = s.status_id  
             ORDER BY i.issuance_id;
             ");

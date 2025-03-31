@@ -21,6 +21,8 @@ class RepairRequestController extends Controller {
                                     a.asset_name,
                                     a.category_id,
                                     a.sub_category_id,
+                                    a.type_id,
+                                    ty.type_name,
                                     cat.category_name,
                                     sub.sub_category_name,
                                     r.issue,
@@ -40,6 +42,7 @@ class RepairRequestController extends Controller {
                                 JOIN un_users AS u ON r.user_id = u.user_id
                                 LEFT JOIN un_companies AS c ON u.company_id = c.company_id
                                 LEFT JOIN un_company_departments AS d ON u.department_id = d.department_id
+                                LEFT JOIN itam_asset_type AS ty ON a.type_id = ty.type_id
                                 JOIN itam_repair_urgency AS urg ON r.urgency_id = urg.urgency_id  
                                 JOIN itam_asset_status AS s ON r.status_id = s.status_id 
                                 ORDER BY r.urgency_id ASC;
