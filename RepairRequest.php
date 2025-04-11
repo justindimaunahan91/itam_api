@@ -45,7 +45,7 @@ try {
     switch ($method) {
         case 'GET':
             $result = isset($_GET['id']) ? 
-                $repairRequests->getRepairRequest($_GET['id']) : 
+                $repairRequests->getRepairRequests($_GET['id']) : 
                 $repairRequests->getRepairRequests();
             sendJsonResponse($result);
             break;
