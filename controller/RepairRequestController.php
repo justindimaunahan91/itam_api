@@ -122,7 +122,7 @@ class RepairRequestController extends Controller {
                     SET remarks = ?, repair_completion_date = ?, status_id = ?, repair_cost = ?
                     WHERE repair_request_id = ?";
             $this->setStatement($sql);
-            $success = $this->statement->execute([$user_id, $repair_completion_date, $status_id, $repair_cost, $repair_request_id]);
+            $success = $this->statement->execute([$repair_request_id, $user_id, $repair_completion_date, $status_id, $repair_cost]);
 
             return ["message" => $success ? "Repair request updated successfully" : "Update failed"];
         } catch (Exception $e) {
