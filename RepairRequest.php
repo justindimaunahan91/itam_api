@@ -72,7 +72,7 @@ try {
         case 'PUT':
             $data = getJsonInput();
             var_dump($data);
-            if (isset($data['repair_request_id'], $data['user_id'], $data['repair_completion_date'], $data['status_id'], $data['repair_cost'])) {
+            if (isset($data['repair_request_id'], $data['user_id'], $data['repair_completion_date'], $data['status_id'], $data['repair_cost'],  $data['remarks'] )) {
                 // Automatically set completion date if status is 'Completed'
                 if ($data['status_id'] == '5' && empty($data['repair_completion_date'])) {
                     $data['repair_completion_date'] = date('Y-m-d H:i:s');

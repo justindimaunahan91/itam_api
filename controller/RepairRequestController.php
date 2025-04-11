@@ -105,7 +105,7 @@ class RepairRequestController extends Controller {
     /**
      * Update an existing repair request with status restriction
      */
-    function updateRepairRequest($repair_request_id, $user_id, $repair_completion_date, $status_id, $repair_cost) {
+    function updateRepairRequest($repair_request_id, $user_id, $repair_completion_date, $status_id, $repair_cost, $remarks) {
         try {
             // Only allow status update to Completed, Rejected, or On Hold
             $allowedStatuses = [5, 9, 7];
