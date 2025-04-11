@@ -75,7 +75,7 @@ class RepairRequestController extends Controller {
             $status_id = 4;
             
             // Check if user is assigned to the asset
-            $this->setStatement("SELECT * FROM itam_issued_assets WHERE asset_id = ? AND user_id = ?");
+            $this->setStatement("SELECT * FROM itam_asset_issuance WHERE asset_id = ? AND user_id = ?");
             $this->statement->execute([$asset_id, $user_id]);
             if (!$this->statement->fetch(PDO::FETCH_ASSOC)) {
                 return ["error" => "You can only request repair for assets issued to you."];
