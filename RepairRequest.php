@@ -52,7 +52,7 @@ try {
 
         case 'POST':
             $data = (array) json_decode($_POST['data']);
-            if (isset($data['user_id'], $data['asset_id'], $data['issue'], $data['remarks'], $data['date_reported'], $data['urgency_id'], $data['repair_start_date'],  $data['status_id'], $data['repair_cost'])) {
+            if (isset($data['user_id'], $data['asset_id'], $data['issue'], $data['remarks'], $data['date_reported'], $data['urgency_id'], $data['repair_start_date'], $data['repair_cost'])) {
                 $result = $repairRequests->addRepairRequest(
                     $data['user_id'], $data['asset_id'], $data['issue'], 
                     $data['remarks'], $data['date_reported'], $data['urgency_id']
