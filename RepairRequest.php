@@ -57,11 +57,7 @@ try {
                 $data['issue'],
                 $data['remarks'],
                 $data['date_reported'],
-                $data['urgency_id'],
-                $data['repair_start_date'] ?? null,
-                $data['repair_completion_date'] ?? null,
-                $data['status_id'] ?? null,
-                $data['repair_cost'] ?? null
+                $data['urgency_id']
             );
             sendJsonResponse($result);
             break;
@@ -85,8 +81,7 @@ try {
                 $data['user_id'],
                 $data['remarks'] ?? null,
                 $data['repair_completion_date'],
-                $data['status_id'],
-                $data['repair_cost']
+                $data['status_id']
             );
             sendJsonResponse($result);
             break;
