@@ -79,7 +79,7 @@ class AssetIssuanceController extends Controller
         try {
             // Insert issuance record
             $this->setStatement("INSERT INTO itam_asset_issuance (asset_id, user_id, issuance_date, status_id)
-                                 VALUES (?, ?, ?, 4)");
+                                 VALUES (?, ?, ?, 3)");
             $success = $this->statement->execute([$asset_id, $user_id, $issuance_date]);
     
             if ($success) {
