@@ -56,7 +56,7 @@ try {
             if (isset($data['asset_id'], $data['user_id'], $data['issuance_date'], $data['status_id'])) {
                 $remarks = $data['remarks'] ?? null;
                 $result = $assetIssuance->addAssetIssuance(
-                    $data['asset_id'], $data['user_id'], $data['issuance_date'], $data['status_id']
+                    $data['asset_id'], $data['user_id'], $data['issuance_date']
                 );
                 sendJsonResponse($result);
             } else {
