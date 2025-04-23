@@ -110,18 +110,29 @@ WHERE t.borrow_transaction_id = ?";
     public function insertBorrowedAsset($company_id, $department_id, $unit_id, $userId, $assetId, $dateBorrowed, $dueDate, $duration, $assetConditionId, $remarks = null)
     {
         try {
+            // Insert the borrow transaction
             $sql = "INSERT INTO itam_asset_transactions 
                     (company_id, department_id, unit_id, user_id, asset_id, date_borrowed, due_date, duration, asset_condition_id, remarks) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
             $this->setStatement($sql);
-            $success = $this->statement->execute([$company_id, $department_id, $unit_id,$userId, $assetId, $dateBorrowed, $dueDate, $duration, $assetConditionId, $remarks]);
-
-            return ["message" => $success ? "Transaction added successfully" : "Insert failed"];
+            $success = $this->statement->execute([
+                $company_id, $department_id, $unit_id,
+                $userId, $assetId, $dateBorrowed, $dueDate,
+                $duration, $assetConditionId, $remarks
+            ]);
+    
+            // If insert succeeded, update asset status
+            if ($success) {
+                $this->setStatement("UPDATE itam_asset SET status_id = 2 WHERE asset_id = ?");
+                $this->statement->execute([$assetId]);
+            }
+    
+            return ["message" => $success ? "Transaction added and asset status updated" : "Insert failed"];
         } catch (Exception $e) {
             return ["error" => $e->getMessage()];
         }
     }
+    
 
     /**
      * Update an existing borrowed asset record.

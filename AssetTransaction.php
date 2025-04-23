@@ -1,7 +1,7 @@
 <?php
 
 
-require __DIR__ . '/config.php';  // Include configuration file
+require __DIR__ . '/config.php';
 require __DIR__ . '/controller/asset_transaction_controller.php';
 
 $controller = new AssetTransactionController();

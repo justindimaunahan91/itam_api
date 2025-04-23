@@ -74,18 +74,26 @@ class AssetIssuanceController extends Controller
     /**
      * Add a new asset issuance record
      */
-    function addAssetIssuance($asset_id, $user_id, $issuance_date, $status_id)
+    function addAssetIssuance($asset_id, $user_id, $issuance_date)
     {
         try {
+            // Insert issuance record
             $this->setStatement("INSERT INTO itam_asset_issuance (asset_id, user_id, issuance_date, status_id)
-                                 VALUES (?, ?, ?, ?, ?)");
-            $success = $this->statement->execute([$asset_id, $user_id, $issuance_date, $status_id]);
-
-            return ["message" => $success ? "Issuance record added successfully" : "Failed to add record"];
+                                 VALUES (?, ?, ?, 4)");
+            $success = $this->statement->execute([$asset_id, $user_id, $issuance_date]);
+    
+            if ($success) {
+                // Update asset status to 4
+                $this->setStatement("UPDATE itam_asset SET status_id = 4 WHERE asset_id = ?");
+                $this->statement->execute([$asset_id]);
+            }
+    
+            return ["message" => $success ? "Issuance added and asset status updated" : "Failed to add record"];
         } catch (Exception $e) {
             return ["error" => $e->getMessage()];
         }
     }
+    
 
     /**
      * Update an existing asset issuance record
