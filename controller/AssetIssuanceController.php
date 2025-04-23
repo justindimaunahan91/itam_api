@@ -84,7 +84,7 @@ class AssetIssuanceController extends Controller
     
             if ($success) {
                 // Update asset status to 4
-                $this->setStatement("UPDATE itam_asset SET status_id = 4 WHERE asset_id = ?");
+                $this->setStatement("UPDATE itam_asset SET status_id = 3 WHERE asset_id = ?");
                 $this->statement->execute([$asset_id]);
             }
     
