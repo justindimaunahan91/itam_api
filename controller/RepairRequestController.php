@@ -1,14 +1,16 @@
 <?php
 require_once __DIR__ . "/controller.php";
 
-class RepairRequestController extends Controller {
+class RepairRequestController extends Controller
+{
 
     /**
      * Retrieve all repair requests (with optional status filter for tabs)
      */
-    
-    
-     function getRepairRequestById($id): array {
+
+
+    function getRepairRequestById($id): array
+    {
         try {
             $sql = "SELECT 
                         r.repair_request_id,
@@ -48,21 +50,22 @@ class RepairRequestController extends Controller {
                     JOIN itam_repair_urgency AS urg ON r.urgency_id = urg.urgency_id  
                     JOIN itam_asset_status AS s ON r.status_id = s.status_id
                     WHERE r.repair_request_id = ?";
-    
+
             $this->setStatement($sql);
             $this->statement->execute([$id]);
-    
+
             $result = $this->statement->fetch(PDO::FETCH_ASSOC);
-    
+
             return $result ?: ["error" => "Repair request not found"];
         } catch (Exception $e) {
             return ["error" => "Error fetching repair request: " . $e->getMessage()];
         }
     }
-    
-    
-    
-     function getRepairRequests(): array {
+
+
+
+    function getRepairRequests(): array
+    {
         try {
             $statusFilter = $_GET['status_id'] ?? null;
             $sql = "SELECT 
@@ -125,11 +128,12 @@ class RepairRequestController extends Controller {
     /**
      * Add a new repair request with validation
      */
-    function addRepairRequest($user_id, $asset_id, $issue, $remarks, $date_reported, $urgency_id) {
+    function addRepairRequest($user_id, $asset_id, $issue, $remarks, $date_reported, $urgency_id, $repair_start_date)
+    {
         try {
             // Default status to "Under Repair"
             $status_id = 4;
-            
+
             // Check if user is assigned to the asset
             $this->setStatement("SELECT * FROM itam_asset_issuance WHERE asset_id = ? AND user_id = ?");
             $this->statement->execute([$asset_id, $user_id]);
@@ -141,18 +145,25 @@ class RepairRequestController extends Controller {
             $this->setStatement("SELECT status_id FROM itam_asset_repair_request WHERE asset_id = ? ORDER BY repair_request_id DESC LIMIT 1");
             $this->statement->execute([$asset_id]);
             $latestStatus = $this->statement->fetch(PDO::FETCH_ASSOC);
-            
+
             if ($latestStatus && in_array($latestStatus['status_id'], [4, 7, 9])) {
                 return ["error" => "Cannot create repair request: asset is currently under repair, on hold, or was rejected."];
             }
 
             $sql = "INSERT INTO itam_asset_repair_request
-                    (user_id, asset_id, issue, remarks, date_reported, urgency_id, status_id)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    (user_id, asset_id, issue, remarks, date_reported, urgency_id, repair_start_date, status_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             $this->setStatement($sql);
-            $success = $this->statement->execute([$user_id, $asset_id, $issue, $remarks, $date_reported, $urgency_id, $status_id]);
+            $success = $this->statement->execute([$user_id, $asset_id, $issue, $remarks, $date_reported, $urgency_id, $repair_start_date, $status_id]);
+            if ($success) {
+                // 🔧 Update asset status to 'Under Repair'
+                $this->setStatement("UPDATE itam_asset SET status_id = ? WHERE asset_id = ?");
+                $this->statement->execute([$status_id, $asset_id]);
 
-            return ["message" => $success ? "Repair request added successfully" : "Insert failed"];
+                return ["message" => "Repair request added and asset status updated to Under Repair"];
+            } else {
+                return ["error" => "Insert failed"];
+            }
         } catch (Exception $e) {
             return ["error" => "Error adding repair request: " . $e->getMessage()];
         }
@@ -161,7 +172,8 @@ class RepairRequestController extends Controller {
     /**
      * Update an existing repair request with status restriction
      */
-    function updateRepairRequest($repair_request_id, $user_id, $repair_completion_date, $status_id, $repair_cost, $remarks) {
+    function updateRepairRequest($repair_request_id, $user_id, $repair_completion_date, $status_id, $repair_cost, $remarks)
+    {
         try {
             // Only allow status update to Completed, Rejected, or On Hold
             $allowedStatuses = [5, 9, 7];
@@ -169,7 +181,7 @@ class RepairRequestController extends Controller {
                 return ["error" => "Invalid status update. Status must be completed, rejected, or on hold."];
             }
 
-            // Ensure completion date is not in the future
+            // // Ensure completion date is not in the future
             if (!empty($repair_completion_date) && strtotime($repair_completion_date) > strtotime(date('Y-m-d'))) {
                 return ["error" => "Repair completion date cannot be in the future."];
             }
@@ -178,7 +190,14 @@ class RepairRequestController extends Controller {
                     SET remarks = ?, repair_completion_date = ?, status_id = ?, repair_cost = ?
                     WHERE repair_request_id = ?";
             $this->setStatement($sql);
-            $success = $this->statement->execute([$repair_request_id, $user_id, $repair_completion_date, $status_id, $repair_cost]);
+            $success = $this->statement->execute([
+                $remarks,                  // 1st placeholder
+                $repair_completion_date,   // 2nd
+                $status_id,                // 3rd
+                $repair_cost,              // 4th
+                $repair_request_id         // 5th
+            ]);
+
 
             return ["message" => $success ? "Repair request updated successfully" : "Update failed"];
         } catch (Exception $e) {
@@ -189,7 +208,8 @@ class RepairRequestController extends Controller {
     /**
      * Delete a repair request
      */
-    function deleteRepairRequest($repair_request_id) {
+    function deleteRepairRequest($repair_request_id)
+    {
         try {
             $this->setStatement("DELETE FROM itam_asset_repair_request WHERE repair_request_id = ?");
             $success = $this->statement->execute([$repair_request_id]);

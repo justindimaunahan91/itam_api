@@ -127,19 +127,26 @@ function handleRequest($controller, $actions) {
                 }
 
                 // Handle File Upload
-                $file = isset($_FILES['file']) ? $_FILES['file'] : null;
-                if ($file && $file['error'] === UPLOAD_ERR_OK) {
+                $files = isset($_FILES['file']) ? $_FILES['file'] : null;
+                $filenames = [];
+
+                if ($files && is_array($files['name'])) {
                     $uploadDir = __DIR__ . "/uploads/";
                     if (!is_dir($uploadDir)) {
                         mkdir($uploadDir, 0777, true);
                     }
 
-                    $fileName = time() . "_" . basename($file['name']);
-                    $filePath = "uploads/" . $fileName;
-                    move_uploaded_file($file['tmp_name'], $filePath);
-                    $data["file"] = $filePath;
+                    foreach ($files['name'] as $index => $name) {
+                        if ($files['error'][$index] === UPLOAD_ERR_OK) {
+                            $fileName = time() . "_" . basename($name);
+                            $filePath = "uploads/" . $fileName;
+                            move_uploaded_file($files['tmp_name'][$index], $filePath);
+                            array_push($filenames, $filePath);
+                        }
+                    }
                 }
 
+                $data['filenames'] = $filenames;
                 // Check if inserting an asset
                 if ($actions['create'] === 'insertAsset') {
                     global $subCategoryController;
