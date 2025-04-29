@@ -3,7 +3,7 @@ require_once 'controller.php';
 // require_once 'db.php';
 class Asset extends Controller
 {
-  
+
     function retrieveAssets()
     {
         $this->setStatement("SELECT A.*, C.category_name, SC.sub_category_name, A.type_id, A.brand, T.type_name, 
@@ -37,75 +37,89 @@ class Asset extends Controller
 
 
     public function insertAsset($data)
-{
-    extract($data);
+    {
+        extract($data);
 
-    // // Ensure category_id exists
-    // if (!isset($category_id)) {
-    //     $this->sendJsonResponse(["error" => "Missing category_id"], 400);
-    // }
+        // // Ensure category_id exists
+        // if (!isset($category_id)) {
+        //     $this->sendJsonResponse(["error" => "Missing category_id"], 400);
+        // }
 
-    // Handle subcategory: Check if it exists, insert if missing
-    if (!empty($sub_category_name)) {
-         $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name, code) VALUES (?, ?, ?)");
+        // Handle subcategory: Check if it exists, insert if missing
+        if (!empty($sub_category_name)) {
+            $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name, code) VALUES (?, ?, ?)");
             $this->statement->execute([$category_id, $sub_category_name, strtoupper(substr($sub_category_name, 0, 2))]);
             $sub_category_id = $this->connection->lastInsertId();
+        }
+        if ($category_id == 2 && empty($sub_category_id)) {
+            throw new Error("Di nagana");
+        }
+
+        // Generate asset name using the same method as the other function
+        $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id is NULL");
+        $this->statement->execute([$sub_category_id, $category_id]);
+        $count = $this->statement->fetchColumn(0);
+        $count += 1;
+
+        if ($category_id === 1) {
+            $asset_name = substr($asset_name, 0, 2) . "-" . $category_id . str_pad($count, 4, "0", STR_PAD_LEFT);
+        } else {
+            if ($sub_category_id) {
+                $this->setStatement("SELECT code FROM itam_asset_sub_category WHERE sub_category_id = ?");
+                $this->statement->execute([$sub_category_id]);
+                $subcategory_code = $this->statement->fetchColumn() ?: "SC"; // Default if missing
+                $asset_name = $subcategory_code . "-" . $category_id;
+            }
+
+            if ($type_id === "") {
+                $asset_name .= str_pad($count, 4, "0", STR_PAD_LEFT);
+            } else {
+                $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
+            }
+        }
+        $insurance_id = null; // Initialize insurance_id variable
+        if (!empty($insurance_coverage) && !empty($insurance_date_from) && !empty($insurance_date_to)) {
+            $this->setStatement("INSERT INTO itam_asset_insurance (insurance_coverage, insurance_date_from, insurance_date_to) VALUES (?, ?, ?)");
+            $insuranceSuccess = $this->statement->execute([
+                $insurance_coverage,
+                $insurance_date_from,
+                $insurance_date_to
+            ]);
+
+            // Get the insurance_id if insurance was successfully inserted
+            if ($insuranceSuccess) {
+                $insurance_id = $this->connection->lastInsertId();
+            }
+        }
+        // Insert asset with file path
+        $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, status_id, location, specifications, asset_amount, warranty_duration, warranty_due_date, purchase_date, notes, insurance_id, file) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $success = $this->statement->execute([
+            $asset_name,
+            $serial_number,
+            $brand,
+            $category_id,
+            empty($sub_category_id) ? NULL : $sub_category_id,
+            4,
+            $type_id === "" ? null : $type_id,
+            1,
+            $location,
+            $specifications,
+            $asset_amount,
+            $warranty_duration,
+            $warranty_due_date,
+            $purchase_date,
+            $notes,
+            $insurance_id === null ? null : $insurance_id, // Use the insurance_id if insurance exists
+            implode(', ', $filenames)
+        ]);
+
+
+        $this->sendJsonResponse(["message" => $success ? "Asset added successfully" : "Failed to add asset"], $success ? 201 : 500);
     }
-    if ($category_id == 2 && empty($sub_category_id)){
-        throw new Error("Di nagana");
-    }
-
-   // Generate asset name using the same method as the other function
-   $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id is NULL");
-   $this->statement->execute([$sub_category_id, $category_id]);
-   $count = $this->statement->fetchColumn(0);
-   $count += 1;
-
-   if ($category_id === 1) {
-       $asset_name = substr($asset_name, 0, 2) . "-" . $category_id . str_pad($count, 4, "0", STR_PAD_LEFT);
-   } else {
-       if ($sub_category_id) {
-           $this->setStatement("SELECT code FROM itam_asset_sub_category WHERE sub_category_id = ?");
-           $this->statement->execute([$sub_category_id]);
-           $subcategory_code = $this->statement->fetchColumn() ?: "SC"; // Default if missing
-           $asset_name = $subcategory_code . "-" . $category_id;
-       }
-
-       if ($type_id === "") {
-           $asset_name .= str_pad($count, 4, "0", STR_PAD_LEFT);
-       } else {
-           $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
-       }
-   }
-    // Insert asset with file path
-    $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, status_id, location, specifications, asset_amount, warranty_duration, warranty_due_date, purchase_date, notes, insurance, file) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-    $success = $this->statement->execute([
-        $asset_name,
-        $serial_number,
-        $brand,
-        $category_id,
-        empty($sub_category_id) ? NULL : $sub_category_id,
-        4,
-        $type_id === "" ? null : $type_id,
-        1,
-        $location,
-        $specifications,
-        $asset_amount,
-        $warranty_duration,
-        $warranty_due_date,
-        $purchase_date,
-        $notes,
-        $insurance === "" ? null : $insurance,
-        implode(', ', $filenames)
-    ]);
-
-    $this->sendJsonResponse(["message" => $success ? "Asset added successfully" : "Failed to add asset"], $success ? 201 : 500);
-}
 
 
-    
+
 
     function updateAsset($id, $data)
     {
