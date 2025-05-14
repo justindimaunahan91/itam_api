@@ -87,4 +87,62 @@ class SettingsController {
             return ["error" => $e->getMessage()];
         }
     }
+
+    // === CATEGORY-SUBCATEGORY MAPPING FUNCTIONS ===
+
+    // Add a new category-subcategory mapping
+    public function addCategorySubcategoryMapping($categoryId, $subcategoryId) {
+        try {
+            $check = $this->conn->prepare("SELECT COUNT(*) FROM itam_catsub_map WHERE category_id = :categoryId AND subcategory_id = :subcategoryId");
+            $check->execute([
+                ':categoryId' => $categoryId,
+                ':subcategoryId' => $subcategoryId
+            ]);
+            if ($check->fetchColumn() > 0) {
+                return ["error" => "Mapping already exists."];
+            }
+
+            $stmt = $this->conn->prepare("INSERT INTO itam_catsub_map (category_id, subcategory_id) VALUES (:categoryId, :subcategoryId)");
+            $stmt->execute([
+                ':categoryId' => $categoryId,
+                ':subcategoryId' => $subcategoryId
+            ]);
+            return true;
+        } catch (PDOException $e) {
+            return ["error" => $e->getMessage()];
+        }
+    }
+
+    // Get all mappings
+    public function getCategorySubcategoryMappings() {
+        try {
+            $stmt = $this->conn->prepare("
+                SELECT 
+                    m.map_id, 
+                    c.category_id, 
+                    c.category_name, 
+                    s.subcategory_id, 
+                    s.subcategory_name
+                FROM itam_catsub_map m
+                JOIN itam_asset_category c ON m.category_id = c.category_id
+                JOIN itam_asset_subcategory s ON m.subcategory_id = s.subcategory_id
+                ORDER BY c.category_name, s.subcategory_name
+            ");
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            return ["error" => $e->getMessage()];
+        }
+    }
+
+    // Delete a specific mapping
+    public function deleteCategorySubcategoryMapping($mapId) {
+        try {
+            $stmt = $this->conn->prepare("DELETE FROM itam_catsub_map WHERE map_id = :mapId");
+            $stmt->execute([':mapId' => $mapId]);
+            return true;
+        } catch (PDOException $e) {
+            return ["error" => $e->getMessage()];
+        }
+    }
 }
