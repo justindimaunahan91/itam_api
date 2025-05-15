@@ -250,4 +250,16 @@ public function deleteSubTypeMapping($map_id) {
         return ["error" => $e->getMessage()];
     }
 }
+// Get a specific setting by key
+public function getSetting($key) {
+    try {
+        $stmt = $this->conn->prepare("SELECT `value` FROM settings WHERE `key` = :key");
+        $stmt->execute([':key' => $key]);
+        $value = $stmt->fetchColumn();
+        return $value !== false ? $value : null;
+    } catch (PDOException $e) {
+        return ["error" => $e->getMessage()];
+    }
+}
+
 }

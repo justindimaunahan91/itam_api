@@ -17,6 +17,21 @@ function respond($data, $code = 200) {
     exit;
 }
 
+// Global helper function to get a setting by key
+function getSetting($key) {
+    static $cache = [];
+
+    if (isset($cache[$key])) {
+        return $cache[$key];
+    }
+
+    $settingsController = new SettingsController();
+    $value = $settingsController->getSetting($key);
+    $cache[$key] = $value;
+
+    return $value;
+}
+
 // Routing based on request
 switch ($_GET['action'] ?? '') {
 
@@ -27,6 +42,11 @@ switch ($_GET['action'] ?? '') {
     case 'update_settings':
         if ($method !== 'POST' || empty($input)) respond(["error" => "Invalid request"], 400);
         respond($controller->updateSettings($input));
+
+    case 'get_setting_by_key':
+        if (!isset($_GET['key'])) respond(["error" => "Key parameter required"], 400);
+        $value = getSetting($_GET['key']);
+        respond(["key" => $_GET['key'], "value" => $value]);
 
     // === RECYCLE BIN ===
     case 'get_recycle_bin':

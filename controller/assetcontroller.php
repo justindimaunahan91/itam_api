@@ -3,6 +3,18 @@ require_once 'controller.php';
 // require_once 'db.php';
 class Asset extends Controller
 {
+    /**
+     * Retrieve a setting value from the database or configuration.
+     * For demonstration, this uses a simple query from a settings table.
+     * Adjust the implementation as needed for your application.
+     */
+    protected function getSetting($key)
+    {
+        $this->setStatement("SELECT value FROM settings WHERE `key` = ?");
+        $this->statement->execute([$key]);
+        $value = $this->statement->fetchColumn();
+        return $value !== false ? $value : null;
+    }
 
     function retrieveAssets()
     {
@@ -91,6 +103,45 @@ class Asset extends Controller
                 $insurance_id = $this->connection->lastInsertId();
             }
         }
+        // Step 1: Load dynamic settings
+$maxImages = (int) $this->getSetting('max_images_per_item');
+$allowedTypes = explode(',', $this->getSetting('allowed_file_types')); // e.g. 'jpg,jpeg,png,webp'
+
+// Step 2: Validate uploaded images
+if (!isset($_FILES['images'])) {
+    $this->sendJsonResponse(["error" => "No image files uploaded."], 400);
+}
+
+$uploadedImages = $_FILES['images'];
+$filenames = [];
+
+// Step 3: Count images
+$imageCount = count(array_filter($uploadedImages['name']));
+if ($imageCount > $maxImages) {
+    $this->sendJsonResponse(["error" => "Maximum of $maxImages images allowed."], 400);
+}
+
+// Step 4: Validate and save
+for ($i = 0; $i < $imageCount; $i++) {
+    $tmpName = $uploadedImages['tmp_name'][$i];
+    $originalName = $uploadedImages['name'][$i];
+    $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+    if (!in_array($ext, $allowedTypes)) {
+        $this->sendJsonResponse(["error" => "File type .$ext is not allowed."], 400);
+    }
+
+    // Save file (ensure 'uploads/' folder exists with proper permissions)
+    $newName = uniqid() . '.' . $ext;
+    $destination = "uploads/" . $newName;
+
+    if (move_uploaded_file($tmpName, $destination)) {
+        $filenames[] = $destination;
+    } else {
+        $this->sendJsonResponse(["error" => "Failed to upload image: $originalName"], 500);
+    }
+}
+
         // Insert asset with file path
         $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, status_id, location, specifications, asset_amount, warranty_duration, warranty_due_date, purchase_date, notes, insurance_id, file) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
