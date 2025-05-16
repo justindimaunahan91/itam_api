@@ -45,12 +45,13 @@ $routes = [
         'create'  => 'insertAssetType',
         'update'  => 'updateAssetType',
         'delete'  => 'deleteAssetType'
+    ],
+    'mappedtype' => [
+        'getAll'  => 'retrieveAllMappedTypes',
+        'create'  => 'insertMappedAssetType'
     ]
 ];
 
-/**
- * Send JSON response with HTTP status code
- */
 function sendJsonResponse($data, $status = 200) {
     http_response_code($status);
     header('Content-Type: application/json');
@@ -58,7 +59,6 @@ function sendJsonResponse($data, $status = 200) {
     exit;
 }
 
-// Instantiate controllers
 $assetController = new Asset();
 $subCategoryController = new AssetSubCategory();
 
@@ -66,14 +66,12 @@ $controller = [
     'asset'       => $assetController,
     'category'    => new AssetCategory(),
     'subcategory' => $subCategoryController,
-    'type'        => new AssetType()
+    'type'        => new AssetType(),
+    'mappedtype'  => new AssetType()
 ];
 
 $resource = $_GET['resource'] ?? null;
 
-/**
- * Handle Special Requests
- */
 switch ($resource) {
     case "repairUrgency":
         sendJsonResponse($assetController->getRepairUrgencyLevels());
@@ -100,9 +98,6 @@ switch ($resource) {
         break;
 }
 
-/**
- * Handle CRUD operations dynamically
- */
 function handleRequest($controller, $actions) {
     $method = $_SERVER['REQUEST_METHOD'];
 
@@ -114,9 +109,8 @@ function handleRequest($controller, $actions) {
                     : $controller->{$actions['getAll']}();
                 sendJsonResponse($result ?: ["error" => "No records found"], $result ? 200 : 404);
                 break;
-            
+
             case 'POST':
-                // Process form data and file upload
                 if (!isset($_POST['data'])) {
                     sendJsonResponse(["error" => "Invalid request, missing data"], 400);
                 }
@@ -126,7 +120,6 @@ function handleRequest($controller, $actions) {
                     sendJsonResponse(["error" => "Invalid JSON input"], 400);
                 }
 
-                // Handle File Upload
                 $files = isset($_FILES['file']) ? $_FILES['file'] : null;
                 $filenames = [];
 
@@ -147,40 +140,32 @@ function handleRequest($controller, $actions) {
                 }
 
                 $data['filenames'] = $filenames;
-                // Check if inserting an asset
+
                 if ($actions['create'] === 'insertAsset') {
                     global $subCategoryController;
-                
-                    // Ensure category_id exists
+
                     if (!isset($data['category_id'])) {
                         sendJsonResponse(["error" => "Missing category_id"], 400);
                     }
-                
-                    // // Check if sub_category_name is provided, and verify if it exists
-                    // if (!empty($data['sub_category_name'])) {
-                    //     $subcategoryResult = $assetController->insertAsset(
-                    //         $data['category_id'], 
-                    //         $data['sub_category_name']
-                    //     );
-                
-                    //     if (isset($subcategoryResult['sub_category_id'])) {
-                    //         $data['sub_category_id'] = $subcategoryResult['sub_category_id'];
-                    //     } else {
-                    //         sendJsonResponse(["error" => "Failed to process sub-category"], 500);
-                    //     }
-                    // }
-                    
-                    // Proceed with asset insertion
+
                     $success = call_user_func([$controller, $actions['create']], $data);
                     sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
+                } elseif ($actions['create'] === 'insertMappedAssetType') {
+                    if (!isset($data['sub_category_id']) || !isset($data['type_name'])) {
+                        sendJsonResponse(["error" => "Missing sub_category_id or type_name"], 400);
+                    }
+
+                    $controller->insertMappedAssetType($data['sub_category_id'], $data['type_name']);
+                    return;
                 }
-                
+
+                break;
 
             case 'PUT':
                 $data = json_decode(file_get_contents('php://input'), true);
                 if (!isset($data['id']) || empty($data['id'])) 
                     sendJsonResponse(["error" => "Missing 'id' field for update"], 400);
-                
+
                 $success = call_user_func_array([$controller, $actions['update']], array_values($data));
                 sendJsonResponse(["message" => $success ? "Updated successfully" : "Update failed"], $success ? 200 : 500);
                 break;

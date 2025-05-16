@@ -88,168 +88,168 @@ class SettingsController {
         }
     }
 
-   // === CATEGORY-SUBCATEGORY MAPPING FUNCTIONS ===
+//    // === CATEGORY-SUBCATEGORY MAPPING FUNCTIONS ===
 
-public function getCategorySubcategoryMappings() {
-    try {
-        $stmt = $this->conn->prepare("
-            SELECT m.map_id, c.name AS category_name, s.name AS subcategory_name, 
-                   m.category_id, m.subcategory_id
-            FROM itam_catsub_map m
-            JOIN itam_asset_category c ON m.category_id = c.id
-            JOIN itam_asset_subcategory s ON m.subcategory_id = s.id
-        ");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
-    }
-}
+// public function getCategorySubcategoryMappings() {
+//     try {
+//         $stmt = $this->conn->prepare("
+//             SELECT m.map_id, c.name AS category_name, s.name AS subcategory_name, 
+//                    m.category_id, m.subcategory_id
+//             FROM itam_catsub_map m
+//             JOIN itam_asset_category c ON m.category_id = c.id
+//             JOIN itam_asset_subcategory s ON m.subcategory_id = s.id
+//         ");
+//         $stmt->execute();
+//         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+//     } catch (PDOException $e) {
+//         return ["error" => $e->getMessage()];
+//     }
+// }
 
-public function addCategorySubcategoryMapping($category_id, $subcategory_id) {
-    try {
-        $check = $this->conn->prepare("
-            SELECT COUNT(*) FROM itam_catsub_map 
-            WHERE category_id = :category_id AND subcategory_id = :subcategory_id
-        ");
-        $check->execute([':category_id' => $category_id, ':subcategory_id' => $subcategory_id]);
-        if ($check->fetchColumn() > 0) {
-            return ["error" => "Mapping already exists."];
-        }
+// public function addCategorySubcategoryMapping($category_id, $subcategory_id) {
+//     try {
+//         $check = $this->conn->prepare("
+//             SELECT COUNT(*) FROM itam_catsub_map 
+//             WHERE category_id = :category_id AND subcategory_id = :subcategory_id
+//         ");
+//         $check->execute([':category_id' => $category_id, ':subcategory_id' => $subcategory_id]);
+//         if ($check->fetchColumn() > 0) {
+//             return ["error" => "Mapping already exists."];
+//         }
 
-        $stmt = $this->conn->prepare("
-            INSERT INTO itam_catsub_map (category_id, subcategory_id)
-            VALUES (:category_id, :subcategory_id)
-        ");
-        $stmt->execute([':category_id' => $category_id, ':subcategory_id' => $subcategory_id]);
-        return true;
-    } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
-    }
-}
+//         $stmt = $this->conn->prepare("
+//             INSERT INTO itam_catsub_map (category_id, subcategory_id)
+//             VALUES (:category_id, :subcategory_id)
+//         ");
+//         $stmt->execute([':category_id' => $category_id, ':subcategory_id' => $subcategory_id]);
+//         return true;
+//     } catch (PDOException $e) {
+//         return ["error" => $e->getMessage()];
+//     }
+// }
 
-public function updateCategorySubcategoryMapping($map_id, $category_id, $subcategory_id) {
-    try {
-        $check = $this->conn->prepare("
-            SELECT COUNT(*) FROM itam_catsub_map 
-            WHERE category_id = :category_id AND subcategory_id = :subcategory_id AND map_id != :map_id
-        ");
-        $check->execute([
-            ':category_id' => $category_id,
-            ':subcategory_id' => $subcategory_id,
-            ':map_id' => $map_id
-        ]);
-        if ($check->fetchColumn() > 0) {
-            return ["error" => "Mapping already exists."];
-        }
+// public function updateCategorySubcategoryMapping($map_id, $category_id, $subcategory_id) {
+//     try {
+//         $check = $this->conn->prepare("
+//             SELECT COUNT(*) FROM itam_catsub_map 
+//             WHERE category_id = :category_id AND subcategory_id = :subcategory_id AND map_id != :map_id
+//         ");
+//         $check->execute([
+//             ':category_id' => $category_id,
+//             ':subcategory_id' => $subcategory_id,
+//             ':map_id' => $map_id
+//         ]);
+//         if ($check->fetchColumn() > 0) {
+//             return ["error" => "Mapping already exists."];
+//         }
 
-        $stmt = $this->conn->prepare("
-            UPDATE itam_catsub_map
-            SET category_id = :category_id, subcategory_id = :subcategory_id
-            WHERE map_id = :map_id
-        ");
-        $stmt->execute([
-            ':map_id' => $map_id,
-            ':category_id' => $category_id,
-            ':subcategory_id' => $subcategory_id
-        ]);
-        return true;
-    } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
-    }
-}
+//         $stmt = $this->conn->prepare("
+//             UPDATE itam_catsub_map
+//             SET category_id = :category_id, subcategory_id = :subcategory_id
+//             WHERE map_id = :map_id
+//         ");
+//         $stmt->execute([
+//             ':map_id' => $map_id,
+//             ':category_id' => $category_id,
+//             ':subcategory_id' => $subcategory_id
+//         ]);
+//         return true;
+//     } catch (PDOException $e) {
+//         return ["error" => $e->getMessage()];
+//     }
+// }
 
-public function deleteCategorySubcategoryMapping($map_id) {
-    try {
-        $stmt = $this->conn->prepare("DELETE FROM itam_catsub_map WHERE map_id = :map_id");
-        $stmt->execute([':map_id' => $map_id]);
-        return true;
-    } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
-    }
-}
+// public function deleteCategorySubcategoryMapping($map_id) {
+//     try {
+//         $stmt = $this->conn->prepare("DELETE FROM itam_catsub_map WHERE map_id = :map_id");
+//         $stmt->execute([':map_id' => $map_id]);
+//         return true;
+//     } catch (PDOException $e) {
+//         return ["error" => $e->getMessage()];
+//     }
+// }
 
 
-// === SUBCATEGORY-TYPE MAPPING FUNCTIONS ===
+// // === SUBCATEGORY-TYPE MAPPING FUNCTIONS ===
 
-public function getSubTypeMappings() {
-    try {
-        $stmt = $this->conn->prepare("
-            SELECT m.map_id, s.name AS subcategory_name, t.name AS type_name, 
-                   m.subcategory_id, m.type_id
-            FROM itam_subtype_map m
-            JOIN itam_asset_subcategory s ON m.subcategory_id = s.id
-            JOIN itam_asset_type t ON m.type_id = t.id
-        ");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
-    }
-}
+// public function getSubTypeMappings() {
+//     try {
+//         $stmt = $this->conn->prepare("
+//             SELECT m.map_id, s.name AS subcategory_name, t.name AS type_name, 
+//                    m.subcategory_id, m.type_id
+//             FROM itam_subtype_map m
+//             JOIN itam_asset_subcategory s ON m.subcategory_id = s.id
+//             JOIN itam_asset_type t ON m.type_id = t.id
+//         ");
+//         $stmt->execute();
+//         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+//     } catch (PDOException $e) {
+//         return ["error" => $e->getMessage()];
+//     }
+// }
 
-public function addSubTypeMapping($subcategory_id, $type_id) {
-    try {
-        $check = $this->conn->prepare("
-            SELECT COUNT(*) FROM itam_subtype_map 
-            WHERE subcategory_id = :subcategory_id AND type_id = :type_id
-        ");
-        $check->execute([':subcategory_id' => $subcategory_id, ':type_id' => $type_id]);
-        if ($check->fetchColumn() > 0) {
-            return ["error" => "Mapping already exists."];
-        }
+// public function addSubTypeMapping($subcategory_id, $type_id) {
+//     try {
+//         $check = $this->conn->prepare("
+//             SELECT COUNT(*) FROM itam_subtype_map 
+//             WHERE subcategory_id = :subcategory_id AND type_id = :type_id
+//         ");
+//         $check->execute([':subcategory_id' => $subcategory_id, ':type_id' => $type_id]);
+//         if ($check->fetchColumn() > 0) {
+//             return ["error" => "Mapping already exists."];
+//         }
 
-        $stmt = $this->conn->prepare("
-            INSERT INTO itam_subtype_map (subcategory_id, type_id)
-            VALUES (:subcategory_id, :type_id)
-        ");
-        $stmt->execute([':subcategory_id' => $subcategory_id, ':type_id' => $type_id]);
-        return true;
-    } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
-    }
-}
+//         $stmt = $this->conn->prepare("
+//             INSERT INTO itam_subtype_map (subcategory_id, type_id)
+//             VALUES (:subcategory_id, :type_id)
+//         ");
+//         $stmt->execute([':subcategory_id' => $subcategory_id, ':type_id' => $type_id]);
+//         return true;
+//     } catch (PDOException $e) {
+//         return ["error" => $e->getMessage()];
+//     }
+// }
 
-public function updateSubTypeMapping($map_id, $subcategory_id, $type_id) {
-    try {
-        $check = $this->conn->prepare("
-            SELECT COUNT(*) FROM itam_subtype_map 
-            WHERE subcategory_id = :subcategory_id AND type_id = :type_id AND map_id != :map_id
-        ");
-        $check->execute([
-            ':subcategory_id' => $subcategory_id,
-            ':type_id' => $type_id,
-            ':map_id' => $map_id
-        ]);
-        if ($check->fetchColumn() > 0) {
-            return ["error" => "Mapping already exists."];
-        }
+// public function updateSubTypeMapping($map_id, $subcategory_id, $type_id) {
+//     try {
+//         $check = $this->conn->prepare("
+//             SELECT COUNT(*) FROM itam_subtype_map 
+//             WHERE subcategory_id = :subcategory_id AND type_id = :type_id AND map_id != :map_id
+//         ");
+//         $check->execute([
+//             ':subcategory_id' => $subcategory_id,
+//             ':type_id' => $type_id,
+//             ':map_id' => $map_id
+//         ]);
+//         if ($check->fetchColumn() > 0) {
+//             return ["error" => "Mapping already exists."];
+//         }
 
-        $stmt = $this->conn->prepare("
-            UPDATE itam_subtype_map
-            SET subcategory_id = :subcategory_id, type_id = :type_id
-            WHERE map_id = :map_id
-        ");
-        $stmt->execute([
-            ':map_id' => $map_id,
-            ':subcategory_id' => $subcategory_id,
-            ':type_id' => $type_id
-        ]);
-        return true;
-    } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
-    }
-}
+//         $stmt = $this->conn->prepare("
+//             UPDATE itam_subtype_map
+//             SET subcategory_id = :subcategory_id, type_id = :type_id
+//             WHERE map_id = :map_id
+//         ");
+//         $stmt->execute([
+//             ':map_id' => $map_id,
+//             ':subcategory_id' => $subcategory_id,
+//             ':type_id' => $type_id
+//         ]);
+//         return true;
+//     } catch (PDOException $e) {
+//         return ["error" => $e->getMessage()];
+//     }
+// }
 
-public function deleteSubTypeMapping($map_id) {
-    try {
-        $stmt = $this->conn->prepare("DELETE FROM itam_subtype_map WHERE map_id = :map_id");
-        $stmt->execute([':map_id' => $map_id]);
-        return true;
-    } catch (PDOException $e) {
-        return ["error" => $e->getMessage()];
-    }
-}
+// public function deleteSubTypeMapping($map_id) {
+//     try {
+//         $stmt = $this->conn->prepare("DELETE FROM itam_subtype_map WHERE map_id = :map_id");
+//         $stmt->execute([':map_id' => $map_id]);
+//         return true;
+//     } catch (PDOException $e) {
+//         return ["error" => $e->getMessage()];
+//     }
+// }
 // Get a specific setting by key
 public function getSetting($key) {
     try {

@@ -1,5 +1,5 @@
 <?php
-require_once 'controllers/settingscontroller.php';
+require_once 'controller/settingscontroller.php';
 
 $controller = new SettingsController();
 
@@ -61,49 +61,53 @@ switch ($_GET['action'] ?? '') {
         if ($method !== 'POST') respond(["error" => "Invalid method"], 405);
         respond($controller->factoryReset());
 
-    // === CATEGORY-SUBCATEGORY MAPPING ===
-    case 'get_catsub_mappings':
-        respond($controller->getCategorySubcategoryMappings());
+    // // === CATEGORY-SUBCATEGORY MAPPING ===
+    // case 'get_catsub_mappings':
+    // The following routes are commented out because the corresponding methods are not implemented in SettingsController.
+    // Uncomment and implement the methods in SettingsController if you want to enable these features.
 
-    case 'add_catsub_mapping':
-        if ($method !== 'POST' || !isset($input['category_id'], $input['subcategory_id'])) {
-            respond(["error" => "category_id and subcategory_id required"], 400);
-        }
-        respond($controller->addCategorySubcategoryMapping($input['category_id'], $input['subcategory_id']));
+    // // === CATEGORY-SUBCATEGORY MAPPING ===
+    // // respond($controller->getCategorySubcategoryMappings());
 
-    case 'update_catsub_mapping':
-        if ($method !== 'POST' || !isset($input['id'], $input['category_id'], $input['subcategory_id'])) {
-            respond(["error" => "id, category_id, and subcategory_id required"], 400);
-        }
-        respond($controller->updateCategorySubcategoryMapping($input['id'], $input['category_id'], $input['subcategory_id']));
+    // // case 'add_catsub_mapping':
+    // //     if ($method !== 'POST' || !isset($input['category_id'], $input['subcategory_id'])) {
+    // //         respond(["error" => "category_id and subcategory_id required"], 400);
+    // //     }
+    // //     respond($controller->addCategorySubcategoryMapping($input['category_id'], $input['subcategory_id']));
 
-    case 'delete_catsub_mapping':
-        if ($method !== 'POST' || !isset($input['id'])) {
-            respond(["error" => "id required"], 400);
-        }
-        respond($controller->deleteCategorySubcategoryMapping($input['id']));
+    // // case 'update_catsub_mapping':
+    // //     if ($method !== 'POST' || !isset($input['id'], $input['category_id'], $input['subcategory_id'])) {
+    // //         respond(["error" => "id, category_id, and subcategory_id required"], 400);
+    // //     }
+    // //     respond($controller->updateCategorySubcategoryMapping($input['id'], $input['category_id'], $input['subcategory_id']));
 
-    // === SUBCATEGORY-TYPE MAPPING ===
-    case 'get_subtype_mappings':
-        respond($controller->getSubTypeMappings());
+    // // case 'delete_catsub_mapping':
+    // //     if ($method !== 'POST' || !isset($input['id'])) {
+    // //         respond(["error" => "id required"], 400);
+    // //     }
+    // //     respond($controller->deleteCategorySubcategoryMapping($input['id']));
 
-    case 'add_subtype_mapping':
-        if ($method !== 'POST' || !isset($input['subcategory_id'], $input['type_id'])) {
-            respond(["error" => "subcategory_id and type_id required"], 400);
-        }
-        respond($controller->addSubTypeMapping($input['subcategory_id'], $input['type_id']));
+    // // === SUBCATEGORY-TYPE MAPPING ===
+    // // case 'get_subtype_mappings':
+    // //     respond($controller->getSubTypeMappings());
 
-    case 'update_subtype_mapping':
-        if ($method !== 'POST' || !isset($input['id'], $input['subcategory_id'], $input['type_id'])) {
-            respond(["error" => "id, subcategory_id, and type_id required"], 400);
-        }
-        respond($controller->updateSubTypeMapping($input['id'], $input['subcategory_id'], $input['type_id']));
+    // // case 'add_subtype_mapping':
+    // //     if ($method !== 'POST' || !isset($input['subcategory_id'], $input['type_id'])) {
+    // //         respond(["error" => "subcategory_id and type_id required"], 400);
+    // //     }
+    // //     respond($controller->addSubTypeMapping($input['subcategory_id'], $input['type_id']));
 
-    case 'delete_subtype_mapping':
-        if ($method !== 'POST' || !isset($input['id'])) {
-            respond(["error" => "id required"], 400);
-        }
-        respond($controller->deleteSubTypeMapping($input['id']));
+    // // case 'update_subtype_mapping':
+    // //     if ($method !== 'POST' || !isset($input['id'], $input['subcategory_id'], $input['type_id'])) {
+    // //         respond(["error" => "id, subcategory_id, and type_id required"], 400);
+    //     }
+    //     respond($controller->updateSubTypeMapping($input['id'], $input['subcategory_id'], $input['type_id']));
+
+    // case 'delete_subtype_mapping':
+    //     if ($method !== 'POST' || !isset($input['id'])) {
+    //         respond(["error" => "id required"], 400);
+    //     }
+    //     respond($controller->deleteSubTypeMapping($input['id']));
 
     // === UNKNOWN ACTION ===
     default:
