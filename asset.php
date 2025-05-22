@@ -164,8 +164,25 @@ function handleRequest($controller, $actions)
                         sendJsonResponse(["error" => "Missing sub_category_name"], 400);
                     }
 
-                    $success = call_user_func([$controller, $actions['create']], $data);
-                    sendJsonResponse(["message" => $success ? "Subcategory created" : "Creation failed"], $success ? 201 : 500);
+                    // Expect $data to have 'category_id' and 'sub_category_name' keys
+                    $category_id = $data['category_id'] ?? null;
+                    $sub_category_name = $data['sub_category_name'] ?? null;
+
+                    if (!$category_id) {
+                        sendJsonResponse(["error" => "Missing category_id"], 400);
+                    }
+
+                    $result = $controller->insertSubCategory($category_id, $sub_category_name);
+
+                    if (isset($result['error'])) {
+                        sendJsonResponse($result, 500);
+                    } elseif (isset($result['sub_category_id'])) {
+                        sendJsonResponse($result, 200); // Sub-category exists
+                    } elseif (isset($result['message'])) {
+                        sendJsonResponse($result, 201);
+                    } else {
+                        sendJsonResponse(["message" => "Unknown response"], 500);
+                    }
                 }
                 break;
 

@@ -34,21 +34,21 @@ class AssetSubCategory extends Controller
     function insertSubCategory($category_id, $sub_category_name = null)
     {
         try {
-            // Check if sub_category_name is provided
             if ($sub_category_name) {
                 $this->setStatement("SELECT sub_category_id FROM itam_asset_sub_category WHERE category_id = ? AND sub_category_name = ?");
                 $this->statement->execute([$category_id, $sub_category_name]);
                 $existingSubCategory = $this->statement->fetchColumn();
 
                 if ($existingSubCategory) {
-                    return ["message" => "Sub-category already exists", "sub_category_id" => $existingSubCategory];
+                    return [
+                        "message" => "Sub-category already exists",
+                        "sub_category_id" => $existingSubCategory
+                    ];
                 }
 
-                // Insert with sub_category_name
                 $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name) VALUES (?, ?)");
                 $success = $this->statement->execute([$category_id, $sub_category_name]);
             } else {
-                // Insert only category_id if no sub_category_name
                 $this->setStatement("INSERT INTO itam_asset_sub_category (category_id) VALUES (?)");
                 $success = $this->statement->execute([$category_id]);
             }
@@ -58,9 +58,6 @@ class AssetSubCategory extends Controller
             return ["error" => $e->getMessage()];
         }
     }
-
-
-
 
     // Update an existing sub-category
     function updateSubCategory($sub_category_id, $category_id, $sub_category_name)
