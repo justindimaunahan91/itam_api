@@ -61,23 +61,11 @@ public function insertAsset($data)
 
     // If a subcategory name is provided, insert it into the subcategory table
     if (!empty($sub_category_name)) {
-        // Generate code from initials of the subcategory name
-        $words = preg_split("/\s+/", trim($sub_category_name));
-        $initials = "";
-
-        foreach ($words as $word) {
-            if (!empty($word)) {
-                $initials .= strtoupper($word[0]);
-            }
-        }
-
-        $code = substr($initials, 0, 2); // Use first 2 initials max
-
         $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name, code) VALUES (?, ?, ?)");
         $this->statement->execute([
             $category_id,
             $sub_category_name,
-            $code
+            strtoupper(substr($sub_category_name, 0, 2)) // Generate a code using the first 2 letters
         ]);
         $sub_category_id = $this->connection->lastInsertId(); // Get the newly inserted subcategory ID
     }
@@ -122,11 +110,6 @@ public function insertAsset($data)
             $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
         }
     }
-
-    // Optionally continue with inserting the asset to itam_asset...
-    // (assuming $asset_name and other required fields are set)
-
-
 
     // Optional: Insert insurance record
     $insurance_id = null;

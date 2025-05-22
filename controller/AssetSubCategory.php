@@ -32,46 +32,43 @@ class AssetSubCategory extends Controller
         return $result;
     }
     function insertSubCategory($category_id, $sub_category_name = null)
-    {
-        try {
-            if ($sub_category_name) {
-                $this->setStatement("SELECT sub_category_id FROM itam_asset_sub_category WHERE category_id = ? AND sub_category_name = ?");
-                $this->statement->execute([$category_id, $sub_category_name]);
-                $existingSubCategory = $this->statement->fetchColumn();
+{
+    try {
+        if ($sub_category_name) {
+            // Check if subcategory already exists
+            $this->setStatement("SELECT sub_category_id FROM itam_asset_sub_category WHERE category_id = ? AND sub_category_name = ?");
+            $this->statement->execute([$category_id, $sub_category_name]);
+            $existingSubCategory = $this->statement->fetchColumn();
 
-                if ($existingSubCategory) {
-                    return [
-                        "message" => "Sub-category already exists",
-                        "sub_category_id" => $existingSubCategory
-                    ];
-                }
-
-                $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name) VALUES (?, ?)");
-                $success = $this->statement->execute([$category_id, $sub_category_name]);
-            } else {
-                $this->setStatement("INSERT INTO itam_asset_sub_category (category_id) VALUES (?)");
-                $success = $this->statement->execute([$category_id]);
+            if ($existingSubCategory) {
+                return [
+                    "message" => "Sub-category already exists",
+                    "sub_category_id" => $existingSubCategory
+                ];
             }
 
-            return ["message" => $success ? "Sub-category added successfully" : "Failed to add sub-category"];
-        } catch (Exception $e) {
-            return ["error" => $e->getMessage()];
+            // ✅ Generate code from initials (e.g., "System Unit" → "SU")
+            $words = preg_split('/\s+/', trim($sub_category_name));
+            $initials = '';
+            foreach ($words as $word) {
+                if (!empty($word)) {
+                    $initials .= strtoupper($word[0]);
+                }
+            }
+            $code = substr($initials, 0, 2); // Limit to 2 letters
+
+            // ✅ Insert with code
+            $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name, code) VALUES (?, ?, ?)");
+            $success = $this->statement->execute([$category_id, $sub_category_name, $code]);
+
+        } else {
+            // No subcategory name provided
+            $this->setStatement("INSERT INTO itam_asset_sub_category (category_id) VALUES (?)");
+            $success = $this->statement->execute([$category_id]);
         }
-    }
 
-    // Update an existing sub-category
-    function updateSubCategory($sub_category_id, $category_id, $sub_category_name)
-    {
-        $this->setStatement("UPDATE itam_asset_sub_category SET category_id = ?, sub_category_name = ? WHERE sub_category_id = ?");
-        $success = $this->statement->execute([$category_id, $sub_category_name, $sub_category_id]);
-        $this->sendJsonResponse(["message" => $success ? "Sub-category updated successfully" : "Failed to update sub-category"], $success ? 200 : 500);
+        return ["message" => $success ? "Sub-category added successfully" : "Failed to add sub-category"];
+    } catch (Exception $e) {
+        return ["error" => $e->getMessage()];
     }
-
-    // Delete a sub-category
-    function deleteSubCategory($sub_category_id)
-    {
-        $this->setStatement("DELETE FROM itam_asset_sub_category WHERE sub_category_id = ?");
-        $success = $this->statement->execute([$sub_category_id]);
-        $this->sendJsonResponse(["message" => $success ? "Sub-category deleted successfully" : "Failed to delete sub-category"], $success ? 200 : 500);
-    }
-}
+}}
