@@ -7,7 +7,7 @@ class Asset extends Controller
      * Retrieve a setting value from the database or configuration.
      * For demonstration, this uses a simple query from a settings table.
      * Adjust the implementation as needed for your application.
-     */
+     */ 
     protected function getSetting($key)
     {
         $this->setStatement("SELECT value FROM settings WHERE `key` = ?");
@@ -27,9 +27,9 @@ class Asset extends Controller
 		LEFT JOIN itam_asset_condition CO ON A.asset_condition_id = CO.asset_condition_id
 		LEFT JOIN itam_asset_status S ON A.status_id = S.status_id;");
 
-        $this->statement->execute();
+        $this->statement->execute() ;
         $this->sendJsonResponse($this->statement->fetchAll());
-    }
+    } 
 
     function retrieveOneAsset($id)
     {
@@ -48,99 +48,125 @@ class Asset extends Controller
     // }
 
 
-    public function insertAsset($data)
-    {
-        extract($data);
+public function insertAsset($data)
+{
+    extract($data);
 
-        // // Ensure category_id exists
-        // if (!isset($category_id)) {
-        //     $this->sendJsonResponse(["error" => "Missing category_id"], 400);
-        // }
+    // Validate required field
+    if (!isset($category_id)) {
+        $this->sendJsonResponse(["error" => "Missing category_id"], 400);
+    }
 
-        // Handle subcategory: Check if it exists, insert if missing
-        if (!empty($sub_category_name)) {
-            $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name, code) VALUES (?, ?, ?)");
-            $this->statement->execute([$category_id, $sub_category_name, strtoupper(substr($sub_category_name, 0, 2))]);
-            $sub_category_id = $this->connection->lastInsertId();
-        }
-        if ($category_id == 2 && empty($sub_category_id)) {
-            throw new Error("Di nagana");
-        }
+    $sub_category_id = null;
 
-        // Generate asset name using the same method as the other function
-        $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id is NULL");
-        $this->statement->execute([$sub_category_id, $category_id]);
-        $count = $this->statement->fetchColumn(0);
-        $count += 1;
+    // If a subcategory name is provided, insert it into the subcategory table
+    if (!empty($sub_category_name)) {
+        $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name, code) VALUES (?, ?, ?)");
+        $this->statement->execute([
+            $category_id,
+            $sub_category_name,
+            strtoupper(substr($sub_category_name, 0, 2)) // Generate a code using the first 2 letters
+        ]);
+        $sub_category_id = $this->connection->lastInsertId(); // Get the newly inserted subcategory ID
+    }
 
-        if ($category_id === 1) {
-            $asset_name = substr($asset_name, 0, 2) . "-" . $category_id . str_pad($count, 4, "0", STR_PAD_LEFT);
+    // Count how many assets already exist with the same category and subcategory, and no type
+    $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id IS NULL");
+    $this->statement->execute([$sub_category_id, $category_id]);
+    $count = $this->statement->fetchColumn(0);
+    $count += 1; // Increment for the new asset
+
+    // Generate asset name based on category
+    // Category 1 = External, Category 2 = Internal
+    if (in_array($category_id, [1, 2])) {
+        // Get subcategory code if subcategory is selected
+        if (!empty($sub_category_id)) {
+            $this->setStatement("SELECT code FROM itam_asset_sub_category WHERE sub_category_id = ?");
+            $this->statement->execute([$sub_category_id]);
+            $subcategory_code = $this->statement->fetchColumn() ?: strtoupper(substr($asset_name, 0, 2)); // fallback to asset_name prefix
         } else {
-            if ($sub_category_id) {
-                $this->setStatement("SELECT code FROM itam_asset_sub_category WHERE sub_category_id = ?");
-                $this->statement->execute([$sub_category_id]);
-                $subcategory_code = $this->statement->fetchColumn() ?: "SC"; // Default if missing
-                $asset_name = $subcategory_code . "-" . $category_id;
-            }
-
-            if ($type_id === "") {
-                $asset_name .= str_pad($count, 4, "0", STR_PAD_LEFT);
-            } else {
-                $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
-            }
+            $subcategory_code = strtoupper(substr($asset_name, 0, 2)); // fallback if no subcategory
         }
-        $insurance_id = null; // Initialize insurance_id variable
-        if (!empty($insurance_coverage) && !empty($insurance_date_from) && !empty($insurance_date_to)) {
-            $this->setStatement("INSERT INTO itam_asset_insurance (insurance_coverage, insurance_date_from, insurance_date_to) VALUES (?, ?, ?)");
-            $insuranceSuccess = $this->statement->execute([
-                $insurance_coverage,
-                $insurance_date_from,
-                $insurance_date_to
-            ]);
 
-            // Get the insurance_id if insurance was successfully inserted
-            if ($insuranceSuccess) {
-                $insurance_id = $this->connection->lastInsertId();
-            }
-        }
-        // Step 1: Load dynamic settings
-$maxImages = (int) $this->getSetting('max_images_per_item');
-$allowedTypes = explode(',', $this->getSetting('allowed_file_types')); // e.g. 'jpg,jpeg,png,webp'
+        // Format: CODE-CATEGORYID000X
+        // Example: DE-20012 means DE subcategory, category 2 (Internal), 12th asset
+        $asset_name = $subcategory_code . "-" . $category_id . str_pad($count, 4, "0", STR_PAD_LEFT);
 
-// Step 2: Validate uploaded images
-if (!isset($_FILES['images'])) {
-    $this->sendJsonResponse(["error" => "No image files uploaded."], 400);
-}
-
-$uploadedImages = $_FILES['images'];
-$filenames = [];
-
-// Step 3: Count images
-$imageCount = count(array_filter($uploadedImages['name']));
-if ($imageCount > $maxImages) {
-    $this->sendJsonResponse(["error" => "Maximum of $maxImages images allowed."], 400);
-}
-
-// Step 4: Validate and save
-for ($i = 0; $i < $imageCount; $i++) {
-    $tmpName = $uploadedImages['tmp_name'][$i];
-    $originalName = $uploadedImages['name'][$i];
-    $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-
-    if (!in_array($ext, $allowedTypes)) {
-        $this->sendJsonResponse(["error" => "File type .$ext is not allowed."], 400);
-    }
-
-    // Save file (ensure 'uploads/' folder exists with proper permissions)
-    $newName = uniqid() . '.' . $ext;
-    $destination = "uploads/" . $newName;
-
-    if (move_uploaded_file($tmpName, $destination)) {
-        $filenames[] = $destination;
     } else {
-        $this->sendJsonResponse(["error" => "Failed to upload image: $originalName"], 500);
+        // If the category is neither External nor Internal
+        if (!empty($sub_category_id)) {
+            $this->setStatement("SELECT code FROM itam_asset_sub_category WHERE sub_category_id = ?");
+            $this->statement->execute([$sub_category_id]);
+            $subcategory_code = $this->statement->fetchColumn() ?: "SC"; // Default fallback code
+            $asset_name = $subcategory_code . "-" . $category_id;
+        } else {
+            $asset_name = "ASSET-" . $category_id; // Fallback format if no subcategory
+        }
+
+        // Add count or type ID to the name
+        if (empty($type_id)) {
+            $asset_name .= str_pad($count, 4, "0", STR_PAD_LEFT);
+        } else {
+            $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
+        }
     }
-}
+
+    // Optional: Insert insurance record
+    $insurance_id = null;
+    if (!empty($insurance_coverage) && !empty($insurance_date_from) && !empty($insurance_date_to)) {
+        $this->setStatement("INSERT INTO itam_asset_insurance (insurance_coverage, insurance_date_from, insurance_date_to) VALUES (?, ?, ?)");
+        $insuranceSuccess = $this->statement->execute([
+            $insurance_coverage,
+            $insurance_date_from,
+            $insurance_date_to
+        ]);
+
+        if ($insuranceSuccess) {
+            $insurance_id = $this->connection->lastInsertId();
+        }
+    }
+
+    // Load image settings
+    $maxImages = (int) $this->getSetting('max_images_per_item');
+    $allowedTypes = explode(',', $this->getSetting('allowed_file_types')); // e.g. 'jpg,jpeg,png,webp'
+
+    // Validate uploaded images
+    if (!isset($_FILES['images'])) {
+        $this->sendJsonResponse(["error" => "No image files uploaded."], 400);
+    }
+
+    $uploadedImages = $_FILES['images'];
+    $filenames = [];
+
+    // check image count
+    $imageCount = count(array_filter($uploadedImages['name']));
+    if ($imageCount > $maxImages) {
+        $this->sendJsonResponse(["error" => "Maximum of $maxImages images allowed."], 400);
+    }
+
+    // Validate and save each image
+    for ($i = 0; $i < $imageCount; $i++) {     
+        $tmpName = $uploadedImages['tmp_name'][$i];
+        $originalName = $uploadedImages['name'][$i];
+        $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+        if (!in_array($ext, $allowedTypes)) {
+            $this->sendJsonResponse(["error" => "File type .$ext is not allowed."], 400);
+        }
+
+        $newName = uniqid() . '.' . $ext;
+        $destination = "uploads/" . $newName;
+
+        if (move_uploaded_file($tmpName, $destination)) {
+            $filenames[] = $destination;
+        } else {
+            $this->sendJsonResponse(["error" => "Failed to upload image: $originalName"], 500);
+        }
+    }
+
+    // You can now insert asset record here using $asset_name, $category_id, $sub_category_id, $type_id, $insurance_id, $filenames, etc.
+
+
 
         // Insert asset with file path
         $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, status_id, location, specifications, asset_amount, warranty_duration, warranty_due_date, purchase_date, notes, insurance_id, file) 
