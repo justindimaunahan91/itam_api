@@ -1,8 +1,8 @@
 <?php
 
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Access-Control-Allow-Origin: *"); 
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS"); 
+header("Access-Control-Allow-Headers: Content-Type, Authorization"); 
 header("Content-Type: application/json");
 
 // Handle OPTIONS request (Preflight)
@@ -52,8 +52,7 @@ $routes = [
     ]
 ];
 
-function sendJsonResponse($data, $status = 200)
-{
+function sendJsonResponse($data, $status = 200) {
     http_response_code($status);
     header('Content-Type: application/json');
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
@@ -63,7 +62,7 @@ function sendJsonResponse($data, $status = 200)
 $assetController = new Asset();
 $subCategoryController = new AssetSubCategory();
 
-$controller = [
+$controller = [  
     'asset'       => $assetController,
     'category'    => new AssetCategory(),
     'subcategory' => $subCategoryController,
@@ -99,15 +98,14 @@ switch ($resource) {
         break;
 }
 
-function handleRequest($controller, $actions)
-{
+function handleRequest($controller, $actions) {
     $method = $_SERVER['REQUEST_METHOD'];
 
     try {
         switch ($method) {
             case 'GET':
-                $result = !empty($_GET['id'])
-                    ? $controller->{$actions['getOne']}($_GET['id'])
+                $result = !empty($_GET['id']) 
+                    ? $controller->{$actions['getOne']}($_GET['id']) 
                     : $controller->{$actions['getAll']}();
                 sendJsonResponse($result ?: ["error" => "No records found"], $result ? 200 : 404);
                 break;
@@ -159,10 +157,10 @@ function handleRequest($controller, $actions)
 
                     $controller->insertMappedAssetType($data['sub_category_id'], $data['type_name']);
                     return;
-                } elseif ($actions['create'] === 'insertSubCategory') {
-                    if (!isset($data['sub_category_name'])) {
-                        sendJsonResponse(["error" => "Missing sub_category_name"], 400);
-                    }
+                }  elseif ($actions['create'] === 'insertSubCategory') {
+        if (!isset($data['sub_category_name'])) {
+            sendJsonResponse(["error" => "Missing sub_category_name"], 400);
+        }
 
                     // Expect $data to have 'category_id' and 'sub_category_name' keys
                     $category_id = $data['category_id'] ?? null;
@@ -186,18 +184,18 @@ function handleRequest($controller, $actions)
                 }
                 break;
 
-
             case 'PUT':
                 $data = json_decode(file_get_contents('php://input'), true);
-                if (!isset($data['id']) || empty($data['id']))
+                if (!isset($data['id']) || empty($data['id'])) 
                     sendJsonResponse(["error" => "Missing 'id' field for update"], 400);
 
                 $success = call_user_func_array([$controller, $actions['update']], array_values($data));
                 sendJsonResponse(["message" => $success ? "Updated successfully" : "Update failed"], $success ? 200 : 500);
+            
                 break;
 
             case 'DELETE':
-                if (!isset($_GET['id']) || empty($_GET['id']))
+                if (!isset($_GET['id']) || empty($_GET['id'])) 
                     sendJsonResponse(["error" => "Missing 'id' parameter for deletion"], 400);
 
                 $success = $controller->{$actions['delete']}($_GET['id']);

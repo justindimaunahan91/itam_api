@@ -58,7 +58,7 @@ class AssetType extends Controller {
     function retrieveAllMappedTypes() {
         $this->setStatement("
             SELECT
-                T.type_id,
+                T.type_id AS id,
                 T.type_name AS name,
                 'Type' AS classification,
                 S.sub_category_name AS parent,
