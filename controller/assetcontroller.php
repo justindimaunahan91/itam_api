@@ -61,19 +61,26 @@ public function insertAsset($data)
 
     // If a subcategory name is provided, insert it into the subcategory table
     if (!empty($sub_category_name)) {
-    $cleanName = trim($sub_category_name);
-    $subCategoryCode = strtoupper(substr($cleanName, 0, 2));
+        // Generate code from initials of the subcategory name
+        $words = preg_split("/\s+/", trim($sub_category_name));
+        $initials = "";
 
-    $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name, code) VALUES (?, ?, ?)");
-    $this->statement->execute([
-        $category_id,
-        $cleanName,
-        $subCategoryCode
-    ]);
+        foreach ($words as $word) {
+            if (!empty($word)) {
+                $initials .= strtoupper($word[0]);
+            }
+        }
 
-    $sub_category_id = $this->connection->lastInsertId();
-}
+        $code = substr($initials, 0, 2); // Use first 2 initials max
 
+        $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name, code) VALUES (?, ?, ?)");
+        $this->statement->execute([
+            $category_id,
+            $sub_category_name,
+            $code
+        ]);
+        $sub_category_id = $this->connection->lastInsertId(); // Get the newly inserted subcategory ID
+    }
 
     // Count how many assets already exist with the same category and subcategory, and no type
     $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id IS NULL");
@@ -115,6 +122,11 @@ public function insertAsset($data)
             $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
         }
     }
+
+    // Optionally continue with inserting the asset to itam_asset...
+    // (assuming $asset_name and other required fields are set)
+
+
 
     // Optional: Insert insurance record
     $insurance_id = null;
