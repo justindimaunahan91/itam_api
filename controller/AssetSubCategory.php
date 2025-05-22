@@ -31,7 +31,7 @@ class AssetSubCategory extends Controller
         $result = $this->statement->fetch();
         return $result;
     }
-    function insertSubCategory($category_id, $sub_category_name = null)
+function insertSubCategory($category_id, $sub_category_name = null)
 {
     try {
         if ($sub_category_name) {
@@ -47,15 +47,17 @@ class AssetSubCategory extends Controller
                 ];
             }
 
-            // ✅ Generate code from initials (e.g., "System Unit" → "SU")
+            // ✅ Generate 2-letter code
             $words = preg_split('/\s+/', trim($sub_category_name));
-            $initials = '';
-            foreach ($words as $word) {
-                if (!empty($word)) {
-                    $initials .= strtoupper($word[0]);
-                }
+            if (count($words) === 1) {
+                $code = strtoupper(substr($words[0], 0, 2)); // 1 word: take first 2 letters
+            } else {
+                // 2+ words: take first letter of first two words
+                $code = strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
             }
-            $code = substr($initials, 0, 2); // Limit to 2 letters
+
+            // Ensure it's always 2 characters (e.g., single-letter word fallback)
+            $code = str_pad($code, 2, "X"); // pad with 'X' if needed
 
             // ✅ Insert with code
             $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name, code) VALUES (?, ?, ?)");
@@ -71,4 +73,5 @@ class AssetSubCategory extends Controller
     } catch (Exception $e) {
         return ["error" => $e->getMessage()];
     }
-}}
+}
+}
