@@ -23,7 +23,8 @@ $routes = [
         'getOne'  => 'retrieveOneAsset',
         'create'  => 'insertAsset',
         'update'  => 'updateAsset',
-        'delete'  => 'deleteAsset'
+        'delete'  => 'deleteAsset',
+        'batchInsert' => 'batchInsertAssets'
     ],
     'category' => [
         'getAll'  => 'retrieveCategories',
@@ -144,6 +145,16 @@ function handleRequest($controller, $actions)
                 $data['filenames'] = $filenames;
 
                 if ($actions['create'] === 'insertAsset') {
+                } elseif ($actions['create'] === 'batchInsertAssets') {
+    // No need for images or category lookup — just raw data
+                          $success = call_user_func([$controller, $actions['create']], $data);
+
+                         if (isset($success['error'])) {
+                             sendJsonResponse($success, 500);
+                         } else {
+                             sendJsonResponse(["message" => "Batch insert completed."], 201);
+                     }
+
                     global $subCategoryController;
 
                     if (!isset($data['category_id'])) {

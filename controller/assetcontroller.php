@@ -195,6 +195,83 @@ public function insertAsset($data)
         $this->sendJsonResponse(["message" => $success ? "Asset added successfully" : "Failed to add asset"], $success ? 201 : 500);
     }
 
+public function batchInsertAssets($assets)
+{
+    try {
+        $this->connection->beginTransaction();
+
+        $this->setStatement("INSERT INTO itam_asset (
+            serial_number,
+            category_id,
+            sub_category_id,
+            type_id,
+            specifications,
+            asset_amount,
+            purchase_date,
+            warranty_due_date,
+            notes,
+            insurance_id
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )");
+
+        foreach ($assets as $asset) {
+            // Optional insurance insert
+            $insurance_id = null;
+            if (!empty($asset['insurance_coverage']) && !empty($asset['insurance_start_date']) && !empty($asset['insurance_end_date'])) {
+                $this->setStatement("INSERT INTO itam_asset_insurance (
+                    insurance_coverage,
+                    insurance_date_from,
+                    insurance_date_to
+                ) VALUES (?, ?, ?)");
+                
+                $this->statement->execute([
+                    $asset['insurance_coverage'],
+                    $asset['insurance_start_date'],
+                    $asset['insurance_end_date']
+                ]);
+                
+                $insurance_id = $this->connection->lastInsertId();
+            }
+
+            // Main asset insert
+            $this->setStatement("INSERT INTO itam_asset (
+                serial_number,
+                category_id,
+                sub_category_id,
+                type_id,
+                specifications,
+                asset_amount,
+                purchase_date,
+                warranty_due_date,
+                notes,
+                insurance_id
+            ) VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )");
+
+            $this->statement->execute([
+                $asset['serial_number'] ?? null,
+                $asset['category_id'] ?? null,
+                $asset['sub_category_id'] ?? null,
+                $asset['type_id'] ?? null,
+                $asset['specifications'] ?? null,
+                $asset['amount'] ?? null,
+                $asset['purchase_date'] ?? null,
+                $asset['warranty_due_date'] ?? null,
+                $asset['notes'] ?? null,
+                $insurance_id
+            ]);
+        }
+
+        $this->connection->commit();
+        $this->sendJsonResponse(["message" => "Batch insert successful."], 201);
+
+    } catch (Exception $e) {
+        $this->connection->rollBack();
+        $this->sendJsonResponse(["error" => $e->getMessage()], 500);
+    }
+}
 
 
 
