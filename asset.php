@@ -157,8 +157,14 @@ function handleRequest($controller, $actions) {
 
                     $controller->insertMappedAssetType($data['sub_category_id'], $data['type_name']);
                     return;
-                }
+                }  elseif ($actions['create'] === 'insertSubCategory') {
+        if (!isset($data['sub_category_name'])) {
+            sendJsonResponse(["error" => "Missing sub_category_name"], 400);
+        }
 
+        $success = call_user_func([$controller, $actions['create']], $data);
+        sendJsonResponse(["message" => $success ? "Subcategory created" : "Creation failed"], $success ? 201 : 500);
+    }
                 break;
 
             case 'PUT':
@@ -168,6 +174,7 @@ function handleRequest($controller, $actions) {
 
                 $success = call_user_func_array([$controller, $actions['update']], array_values($data));
                 sendJsonResponse(["message" => $success ? "Updated successfully" : "Update failed"], $success ? 200 : 500);
+            
                 break;
 
             case 'DELETE':
