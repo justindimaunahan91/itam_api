@@ -62,7 +62,7 @@ class AssetType extends Controller {
                 T.type_name AS name,
                 'Type' AS classification,
                 S.sub_category_name AS parent,
-                S.sub_category_id AS parent_id
+                S.sub_category_id
             FROM itam_asset_type T
             JOIN itam_subtype_map STM ON STM.type_id = T.type_id
             JOIN itam_asset_sub_category S ON STM.subcategory_id = S.sub_category_id
