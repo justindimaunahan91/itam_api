@@ -144,9 +144,9 @@ function handleRequest($controller, $actions)
 
     $data['filenames'] = $filenames;
 
-    if ($actions['create'] === 'batchInsertAssets') {
+    if ($actions['batchInsert'] === 'batchInsertAssets') {
         // Batch insert: expects $data to be an array of asset rows
-        $success = call_user_func([$controller, $actions['create']], $data);
+        $success = call_user_func([$controller, $actions['batchInsert']], $data);
 
         if (isset($success['error'])) {
             sendJsonResponse($success, 500);
