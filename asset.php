@@ -148,9 +148,9 @@ function handleRequest($controller, $actions)
                         sendJsonResponse(["error" => "Missing data"], 400);
                     }
 
-                    $data = json_decode($_POST['data'], true);
+                    $data = json_decode($_POST['data'], true); // Use $_POST['data'] only!
 
-                    if ($data === null) { // json_decode returns null on failure
+                    if ($data === null) {
                         sendJsonResponse(["error" => "Invalid JSON input"], 400);
                     }
 
