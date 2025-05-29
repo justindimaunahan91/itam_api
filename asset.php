@@ -114,86 +114,94 @@ function handleRequest($controller, $actions)
                 break;
 
             case 'POST':
-    if (!isset($_POST['data'])) {
-        sendJsonResponse(["error" => "Invalid request, missing data"], 400);
-    }
+                if (!isset($_POST['data'])) {
+                    sendJsonResponse(["error" => "Invalid request, missing data"], 400);
+                }
 
-    $data = json_decode($_POST['data'], true);
-    if (!$data) {
-        sendJsonResponse(["error" => "Invalid JSON input"], 400);
-    }
+                $data = json_decode($_POST['data'], true);
+                if (!$data) {
+                    sendJsonResponse(["error" => "Invalid JSON input"], 400);
+                }
 
-    $files = isset($_FILES['file']) ? $_FILES['file'] : null;
-    $filenames = [];
+                $files = isset($_FILES['file']) ? $_FILES['file'] : null;
+                $filenames = [];
 
-    if ($files && is_array($files['name'])) {
-        $uploadDir = __DIR__ . "/uploads/";
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
+                if ($files && is_array($files['name'])) {
+                    $uploadDir = __DIR__ . "/uploads/";
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0777, true);
+                    }
 
-        foreach ($files['name'] as $index => $name) {
-            if ($files['error'][$index] === UPLOAD_ERR_OK) {
-                $fileName = time() . "_" . basename($name);
-                $filePath = "uploads/" . $fileName;
-                move_uploaded_file($files['tmp_name'][$index], $filePath);
-                array_push($filenames, $filePath);
-            }
-        }
-    }
+                    foreach ($files['name'] as $index => $name) {
+                        if ($files['error'][$index] === UPLOAD_ERR_OK) {
+                            $fileName = time() . "_" . basename($name);
+                            $filePath = "uploads/" . $fileName;
+                            move_uploaded_file($files['tmp_name'][$index], $filePath);
+                            array_push($filenames, $filePath);
+                        }
+                    }
+                }
 
-    $data['filenames'] = $filenames;
+                $data['filenames'] = $filenames;
+                if ($actions['batchInsert'] === 'batchInsertAssets') {
+                    if (!isset($_POST['data'])) {
+                        sendJsonResponse(["error" => "Missing data"], 400);
+                    }
 
-    if ($actions['batchInsert'] === 'batchInsertAssets') {
-        // Batch insert: expects $data to be an array of asset rows
-        $success = call_user_func([$controller, $actions['batchInsert']], $data);
+                    $data = json_decode($_POST['data'], true);
 
-        if (isset($success['error'])) {
-            sendJsonResponse($success, 500);
-        } else {
-            sendJsonResponse(["message" => "Batch insert completed."], 201);
-        }
-    } elseif ($actions['create'] === 'insertAsset') {
-        // Single insert
-        if (!isset($data['category_id'])) {
-            sendJsonResponse(["error" => "Missing category_id"], 400);
-        }
+                    if ($data === null) { // json_decode returns null on failure
+                        sendJsonResponse(["error" => "Invalid JSON input"], 400);
+                    }
 
-        $success = call_user_func([$controller, $actions['create']], $data);
-        sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
-    } elseif ($actions['create'] === 'insertMappedAssetType') {
-        if (!isset($data['sub_category_id']) || !isset($data['type_name'])) {
-            sendJsonResponse(["error" => "Missing sub_category_id or type_name"], 400);
-        }
+                    $success = call_user_func([$controller, $actions['batchInsert']], $data);
 
-        $controller->insertMappedAssetType($data['sub_category_id'], $data['type_name']);
-        return;
-    } elseif ($actions['create'] === 'insertSubCategory') {
-        if (!isset($data['sub_category_name'])) {
-            sendJsonResponse(["error" => "Missing sub_category_name"], 400);
-        }
+                    if (isset($success['error'])) {
+                        sendJsonResponse($success, 500);
+                    } else {
+                        sendJsonResponse(["message" => "Batch insert completed."], 201);
+                    }
+                } elseif ($actions['create'] === 'insertAsset') {
+                    // Single insert
+                    if (!isset($data['category_id'])) {
+                        sendJsonResponse(["error" => "Missing category_id"], 400);
+                    }
 
-        $category_id = $data['category_id'] ?? null;
-        $sub_category_name = $data['sub_category_name'] ?? null;
+                    $success = call_user_func([$controller, $actions['create']], $data);
+                    sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
+                } elseif ($actions['create'] === 'insertMappedAssetType') {
+                    if (!isset($data['sub_category_id']) || !isset($data['type_name'])) {
+                        sendJsonResponse(["error" => "Missing sub_category_id or type_name"], 400);
+                    }
 
-        if (!$category_id) {
-            sendJsonResponse(["error" => "Missing category_id"], 400);
-        }
+                    $controller->insertMappedAssetType($data['sub_category_id'], $data['type_name']);
+                    return;
+                } elseif ($actions['create'] === 'insertSubCategory') {
+                    if (!isset($data['sub_category_name'])) {
+                        sendJsonResponse(["error" => "Missing sub_category_name"], 400);
+                    }
 
-        $result = $controller->insertSubCategory($category_id, $sub_category_name);
+                    $category_id = $data['category_id'] ?? null;
+                    $sub_category_name = $data['sub_category_name'] ?? null;
 
-        if (isset($result['error'])) {
-            sendJsonResponse($result, 500);
-        } elseif (isset($result['sub_category_id'])) {
-            sendJsonResponse($result, 200); // Sub-category exists
-        } elseif (isset($result['message'])) {
-            sendJsonResponse($result, 201);
-        } else {
-            sendJsonResponse(["message" => "Unknown response"], 500);
-        }
-    }
+                    if (!$category_id) {
+                        sendJsonResponse(["error" => "Missing category_id"], 400);
+                    }
 
-    break;
+                    $result = $controller->insertSubCategory($category_id, $sub_category_name);
+
+                    if (isset($result['error'])) {
+                        sendJsonResponse($result, 500);
+                    } elseif (isset($result['sub_category_id'])) {
+                        sendJsonResponse($result, 200); // Sub-category exists
+                    } elseif (isset($result['message'])) {
+                        sendJsonResponse($result, 201);
+                    } else {
+                        sendJsonResponse(["message" => "Unknown response"], 500);
+                    }
+                }
+
+                break;
 
 
             case 'PUT':
