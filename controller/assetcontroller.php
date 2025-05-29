@@ -256,7 +256,7 @@ public function batchInsertAssets($assets)
                 $asset['sub_category_id'] ?? null,
                 $asset['type_id'] ?? null,
                 $asset['specifications'] ?? null,
-                $asset['amount'] ?? null,
+                $asset['asset_amount'] ?? null,
                 $asset['purchase_date'] ?? null,
                 $asset['warranty_due_date'] ?? null,
                 $asset['notes'] ?? null,
