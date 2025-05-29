@@ -227,8 +227,8 @@ public function batchInsertAssets($assets)
                 
                 $this->statement->execute([
                     $asset['insurance_coverage'],
-                    $asset['insurance_start_date'],
-                    $asset['insurance_end_date']
+                    $asset['insurance_date_from'],
+                    $asset['insurance_date_to']
                 ]);
                 
                 $insurance_id = $this->connection->lastInsertId();
