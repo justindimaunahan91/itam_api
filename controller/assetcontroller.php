@@ -200,6 +200,7 @@ public function batchInsertAssets($assets)
     try {
         $this->connection->beginTransaction();
 
+        // Prepare asset insert once
         $this->setStatement("INSERT INTO itam_asset (
             serial_number,
             category_id,
@@ -214,43 +215,31 @@ public function batchInsertAssets($assets)
         ) VALUES (
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )");
+        $assetStmt = $this->statement;
 
         foreach ($assets as $asset) {
-            // Optional insurance insert
             $insurance_id = null;
-            if (!empty($asset['insurance_coverage']) && !empty($asset['insurance_start_date']) && !empty($asset['insurance_end_date'])) {
+
+            // Insert insurance if present
+            if (!empty($asset['insurance_coverage']) && !empty($asset['insurance_date_from']) && !empty($asset['insurance_date_to'])) {
                 $this->setStatement("INSERT INTO itam_asset_insurance (
                     insurance_coverage,
                     insurance_date_from,
                     insurance_date_to
                 ) VALUES (?, ?, ?)");
-                
-                $this->statement->execute([
+                $insuranceStmt = $this->statement;
+
+                $insuranceStmt->execute([
                     $asset['insurance_coverage'],
                     $asset['insurance_date_from'],
                     $asset['insurance_date_to']
                 ]);
-                
+
                 $insurance_id = $this->connection->lastInsertId();
             }
 
-            // Main asset insert
-            $this->setStatement("INSERT INTO itam_asset (
-                serial_number,
-                category_id,
-                sub_category_id,
-                type_id,
-                specifications,
-                asset_amount,
-                purchase_date,
-                warranty_due_date,
-                notes,
-                insurance_id
-            ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-            )");
-
-            $this->statement->execute([
+            // Execute asset insert with insurance_id
+            $assetStmt->execute([
                 $asset['serial_number'] ?? null,
                 $asset['category_id'] ?? null,
                 $asset['sub_category_id'] ?? null,
