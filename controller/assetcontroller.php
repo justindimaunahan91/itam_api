@@ -111,20 +111,22 @@ public function insertAsset($data)
         }
     }
 
-    // Optional: Insert insurance record
-    $insurance_id = null;
-    if (!empty($insurance_coverage) && !empty($insurance_date_from) && !empty($insurance_date_to)) {
-        $this->setStatement("INSERT INTO itam_asset_insurance (insurance_coverage, insurance_date_from, insurance_date_to) VALUES (?, ?, ?)");
-        $insuranceSuccess = $this->statement->execute([
-            $insurance_coverage,
-            $insurance_date_from,
-            $insurance_date_to
-        ]);
+   // Optional: Insert insurance record
+$insurance_id = null;
+if (!empty($insurance_name) && !empty($insurance_coverage) && !empty($insurance_date_from) && !empty($insurance_date_to)) {
+    $this->setStatement("INSERT INTO itam_asset_insurance (insurance_name, insurance_coverage, insurance_date_from, insurance_date_to) VALUES (?, ?, ?, ?)");
+    $insuranceSuccess = $this->statement->execute([
+        $insurance_name,
+        $insurance_coverage,
+        $insurance_date_from,
+        $insurance_date_to
+    ]);
 
-        if ($insuranceSuccess) {
-            $insurance_id = $this->connection->lastInsertId();
-        }
+    if ($insuranceSuccess) {
+        $insurance_id = $this->connection->lastInsertId();
     }
+}
+
 
     // Load image settings
     $maxImages = (int) $this->getSetting('max_images_per_item');
@@ -221,15 +223,17 @@ public function batchInsertAssets($assets)
             $insurance_id = null;
 
             // Insert insurance if present
-            if (!empty($asset['insurance_coverage']) && !empty($asset['insurance_date_from']) && !empty($asset['insurance_date_to'])) {
+            if (!empty($asset['insurance_name']) && !empty($asset['insurance_coverage']) && !empty($asset['insurance_date_from']) && !empty($asset['insurance_date_to'])) {
                 $this->setStatement("INSERT INTO itam_asset_insurance (
+                    insurance_name,
                     insurance_coverage,
                     insurance_date_from,
                     insurance_date_to
-                ) VALUES (?, ?, ?)");
+                ) VALUES (?, ?, ?, ?)");
                 $insuranceStmt = $this->statement;
 
                 $insuranceStmt->execute([
+                    $asset['insurance_name'],
                     $asset['insurance_coverage'],
                     $asset['insurance_date_from'],
                     $asset['insurance_date_to']

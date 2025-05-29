@@ -19,10 +19,11 @@ class AssetInsurance extends Controller {
     }
 
     // Insert a new insurance record
-    function insertInsurance($insurance_coverage = null, $insurance_date_from = null, $insurance_date_to = null) {
+    function insertInsurance($insurance_name = null, $insurance_coverage = null, $insurance_date_from = null, $insurance_date_to = null) {
         try {
-            $this->setStatement("INSERT INTO itam_asset_insurance (insurance_coverage, insurance_date_from, insurance_date_to) VALUES (?, ?, ?)");
+            $this->setStatement("INSERT INTO itam_asset_insurance (insurance_name, insurance_coverage, insurance_date_from, insurance_date_to) VALUES (?, ?, ?, ?)");
             $success = $this->statement->execute([
+                $insurance_name,
                 $insurance_coverage,
                 $insurance_date_from,
                 $insurance_date_to
@@ -36,9 +37,10 @@ class AssetInsurance extends Controller {
     }
 
     // Update an existing insurance record
-    function updateInsurance($insurance_id, $insurance_coverage, $insurance_date_from, $insurance_date_to) {
-        $this->setStatement("UPDATE itam_asset_insurance SET insurance_coverage = ?, insurance_date_from = ?, insurance_date_to = ? WHERE insurance_id = ?");
+    function updateInsurance($insurance_id, $insurance_name, $insurance_coverage, $insurance_date_from, $insurance_date_to) {
+        $this->setStatement("UPDATE itam_asset_insurance SET insurance_name = ?, insurance_coverage = ?, insurance_date_from = ?, insurance_date_to = ? WHERE insurance_id = ?");
         $success = $this->statement->execute([
+            $insurance_name,
             $insurance_coverage,
             $insurance_date_from,
             $insurance_date_to,

@@ -31,22 +31,35 @@ if (isset($_GET['action'])) {
             break;
 
         case 'insert':
+            $insurance_name = $input['insurance_name'] ?? null;
             $insurance_coverage = $input['insurance_coverage'] ?? null;
             $insurance_date_from = $input['insurance_date_from'] ?? null;
             $insurance_date_to = $input['insurance_date_to'] ?? null;
 
-            $result = $insuranceController->insertInsurance($insurance_coverage, $insurance_date_from, $insurance_date_to);
+            $result = $insuranceController->insertInsurance(
+                $insurance_name,
+                $insurance_coverage,
+                $insurance_date_from,
+                $insurance_date_to
+            );
             echo json_encode($result);
             break;
 
         case 'update':
             if (isset($input['insurance_id'])) {
                 $insurance_id = $input['insurance_id'];
+                $insurance_name = $input['insurance_name'] ?? null;
                 $insurance_coverage = $input['insurance_coverage'] ?? null;
                 $insurance_date_from = $input['insurance_date_from'] ?? null;
                 $insurance_date_to = $input['insurance_date_to'] ?? null;
 
-                $insuranceController->updateInsurance($insurance_id, $insurance_coverage, $insurance_date_from, $insurance_date_to);
+                $insuranceController->updateInsurance(
+                    $insurance_id,
+                    $insurance_name,
+                    $insurance_coverage,
+                    $insurance_date_from,
+                    $insurance_date_to
+                );
             } else {
                 echo json_encode(["error" => "Missing insurance ID for update"]);
             }
