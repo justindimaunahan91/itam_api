@@ -7,7 +7,7 @@ class Asset extends Controller
      * Retrieve a setting value from the database or configuration.
      * For demonstration, this uses a simple query from a settings table.
      * Adjust the implementation as needed for your application.
-     */ 
+     */
     protected function getSetting($key)
     {
         $this->setStatement("SELECT value FROM settings WHERE `key` = ?");
@@ -27,9 +27,9 @@ class Asset extends Controller
 		LEFT JOIN itam_asset_condition CO ON A.asset_condition_id = CO.asset_condition_id
 		LEFT JOIN itam_asset_status S ON A.status_id = S.status_id;");
 
-        $this->statement->execute() ;
+        $this->statement->execute();
         $this->sendJsonResponse($this->statement->fetchAll());
-    } 
+    }
 
     function retrieveOneAsset($id)
     {
@@ -48,125 +48,124 @@ class Asset extends Controller
     // }
 
 
-public function insertAsset($data)
-{
-    extract($data);
+    public function insertAsset($data)
+    {
+        extract($data);
 
-    // Validate required field
-    if (!isset($category_id)) {
-        $this->sendJsonResponse(["error" => "Missing category_id"], 400);
-    }
+        // Validate required field
+        if (!isset($category_id)) {
+            $this->sendJsonResponse(["error" => "Missing category_id"], 400);
+        }
 
-    $sub_category_id = null;
+        $sub_category_id = null;
 
-    // If a subcategory name is provided, insert it into the subcategory table
-    if (!empty($sub_category_name)) {
-        $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name, code) VALUES (?, ?, ?)");
-        $this->statement->execute([
-            $category_id,
-            $sub_category_name,
-            strtoupper(substr($sub_category_name, 0, 2)) // Generate a code using the first 2 letters
-        ]);
-        $sub_category_id = $this->connection->lastInsertId(); // Get the newly inserted subcategory ID
-    }
+        // If a subcategory name is provided, insert it into the subcategory table
+        if (!empty($sub_category_name)) {
+            $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name, code) VALUES (?, ?, ?)");
+            $this->statement->execute([
+                $category_id,
+                $sub_category_name,
+                strtoupper(substr($sub_category_name, 0, 2)) // Generate a code using the first 2 letters
+            ]);
+            $sub_category_id = $this->connection->lastInsertId(); // Get the newly inserted subcategory ID
+        }
 
-    // Count how many assets already exist with the same category and subcategory, and no type
-    $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id IS NULL");
-    $this->statement->execute([$sub_category_id, $category_id]);
-    $count = $this->statement->fetchColumn(0);
-    $count += 1; // Increment for the new asset
+        // Count how many assets already exist with the same category and subcategory, and no type
+        $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id IS NULL");
+        $this->statement->execute([$sub_category_id, $category_id]);
+        $count = $this->statement->fetchColumn(0);
+        $count += 1; // Increment for the new asset
 
-    // Generate asset name based on category
-    // Category 1 = External, Category 2 = Internal
-    if (in_array($category_id, [1, 2])) {
-        // Get subcategory code if subcategory is selected
-        if (!empty($sub_category_id)) {
-            $this->setStatement("SELECT code FROM itam_asset_sub_category WHERE sub_category_id = ?");
-            $this->statement->execute([$sub_category_id]);
-            $subcategory_code = $this->statement->fetchColumn() ?: strtoupper(substr($asset_name, 0, 2)); // fallback to asset_name prefix
+        // Generate asset name based on category
+        // Category 1 = External, Category 2 = Internal
+        if (in_array($category_id, [1, 2])) {
+            // Get subcategory code if subcategory is selected
+            if (!empty($sub_category_id)) {
+                $this->setStatement("SELECT code FROM itam_asset_sub_category WHERE sub_category_id = ?");
+                $this->statement->execute([$sub_category_id]);
+                $subcategory_code = $this->statement->fetchColumn() ?: strtoupper(substr($asset_name, 0, 2)); // fallback to asset_name prefix
+            } else {
+                $subcategory_code = strtoupper(substr($asset_name, 0, 2)); // fallback if no subcategory
+            }
+
+            // Format: CODE-CATEGORYID000X
+            // Example: DE-20012 means DE subcategory, category 2 (Internal), 12th asset
+            $asset_name = $subcategory_code . "-" . $category_id . str_pad($count, 4, "0", STR_PAD_LEFT);
         } else {
-            $subcategory_code = strtoupper(substr($asset_name, 0, 2)); // fallback if no subcategory
+            // If the category is neither External nor Internal
+            if (!empty($sub_category_id)) {
+                $this->setStatement("SELECT code FROM itam_asset_sub_category WHERE sub_category_id = ?");
+                $this->statement->execute([$sub_category_id]);
+                $subcategory_code = $this->statement->fetchColumn() ?: "SC"; // Default fallback code
+                $asset_name = $subcategory_code . "-" . $category_id;
+            } else {
+                $asset_name = "ASSET-" . $category_id; // Fallback format if no subcategory
+            }
+
+            // Add count or type ID to the name
+            if (empty($type_id)) {
+                $asset_name .= str_pad($count, 4, "0", STR_PAD_LEFT);
+            } else {
+                $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
+            }
         }
 
-        // Format: CODE-CATEGORYID000X
-        // Example: DE-20012 means DE subcategory, category 2 (Internal), 12th asset
-        $asset_name = $subcategory_code . "-" . $category_id . str_pad($count, 4, "0", STR_PAD_LEFT);
+        // Optional: Insert insurance record
+        $insurance_id = null;
+        if (!empty($insurance_name) && !empty($insurance_coverage) && !empty($insurance_date_from) && !empty($insurance_date_to)) {
+            $this->setStatement("INSERT INTO itam_asset_insurance (insurance_name, insurance_coverage, insurance_date_from, insurance_date_to) VALUES (?, ?, ?, ?)");
+            $insuranceSuccess = $this->statement->execute([
+                $insurance_name,
+                $insurance_coverage,
+                $insurance_date_from,
+                $insurance_date_to
+            ]);
 
-    } else {
-        // If the category is neither External nor Internal
-        if (!empty($sub_category_id)) {
-            $this->setStatement("SELECT code FROM itam_asset_sub_category WHERE sub_category_id = ?");
-            $this->statement->execute([$sub_category_id]);
-            $subcategory_code = $this->statement->fetchColumn() ?: "SC"; // Default fallback code
-            $asset_name = $subcategory_code . "-" . $category_id;
-        } else {
-            $asset_name = "ASSET-" . $category_id; // Fallback format if no subcategory
+            if ($insuranceSuccess) {
+                $insurance_id = $this->connection->lastInsertId();
+            }
         }
 
-        // Add count or type ID to the name
-        if (empty($type_id)) {
-            $asset_name .= str_pad($count, 4, "0", STR_PAD_LEFT);
-        } else {
-            $asset_name .= $type_id . str_pad($count, 3, "0", STR_PAD_LEFT);
-        }
-    }
 
-   // Optional: Insert insurance record
-$insurance_id = null;
-if (!empty($insurance_name) && !empty($insurance_coverage) && !empty($insurance_date_from) && !empty($insurance_date_to)) {
-    $this->setStatement("INSERT INTO itam_asset_insurance (insurance_name, insurance_coverage, insurance_date_from, insurance_date_to) VALUES (?, ?, ?, ?)");
-    $insuranceSuccess = $this->statement->execute([
-        $insurance_name,
-        $insurance_coverage,
-        $insurance_date_from,
-        $insurance_date_to
-    ]);
+        // Load image settings
+        $maxImages = (int) $this->getSetting('max_images_per_item');
+        $allowedTypes = explode(',', $this->getSetting('allowed_file_types')); // e.g. 'jpg,jpeg,png,webp'
 
-    if ($insuranceSuccess) {
-        $insurance_id = $this->connection->lastInsertId();
-    }
-}
-
-
-    // Load image settings
-    $maxImages = (int) $this->getSetting('max_images_per_item');
-    $allowedTypes = explode(',', $this->getSetting('allowed_file_types')); // e.g. 'jpg,jpeg,png,webp'
-
-    // Validate uploaded images
-    if (!isset($_FILES['images'])) {
-        $this->sendJsonResponse(["error" => "No image files uploaded."], 400);
-    }
-
-    $uploadedImages = $_FILES['images'];
-    $filenames = [];
-
-    // check image count
-    $imageCount = count(array_filter($uploadedImages['name']));
-    if ($imageCount > $maxImages) {
-        $this->sendJsonResponse(["error" => "Maximum of $maxImages images allowed."], 400);
-    }
-
-    // Validate and save each image
-    for ($i = 0; $i < $imageCount; $i++) {     
-        $tmpName = $uploadedImages['tmp_name'][$i];
-        $originalName = $uploadedImages['name'][$i];
-        $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-
-        if (!in_array($ext, $allowedTypes)) {
-            $this->sendJsonResponse(["error" => "File type .$ext is not allowed."], 400);
+        // Validate uploaded images
+        if (!isset($_FILES['images'])) {
+            $this->sendJsonResponse(["error" => "No image files uploaded."], 400);
         }
 
-        $newName = uniqid() . '.' . $ext;
-        $destination = "uploads/" . $newName;
+        $uploadedImages = $_FILES['images'];
+        $filenames = [];
 
-        if (move_uploaded_file($tmpName, $destination)) {
-            $filenames[] = $destination;
-        } else {
-            $this->sendJsonResponse(["error" => "Failed to upload image: $originalName"], 500);
+        // check image count
+        $imageCount = count(array_filter($uploadedImages['name']));
+        if ($imageCount > $maxImages) {
+            $this->sendJsonResponse(["error" => "Maximum of $maxImages images allowed."], 400);
         }
-    }
 
-    // You can now insert asset record here using $asset_name, $category_id, $sub_category_id, $type_id, $insurance_id, $filenames, etc.
+        // Validate and save each image
+        for ($i = 0; $i < $imageCount; $i++) {
+            $tmpName = $uploadedImages['tmp_name'][$i];
+            $originalName = $uploadedImages['name'][$i];
+            $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+            if (!in_array($ext, $allowedTypes)) {
+                $this->sendJsonResponse(["error" => "File type .$ext is not allowed."], 400);
+            }
+
+            $newName = uniqid() . '.' . $ext;
+            $destination = "uploads/" . $newName;
+
+            if (move_uploaded_file($tmpName, $destination)) {
+                $filenames[] = $destination;
+            } else {
+                $this->sendJsonResponse(["error" => "Failed to upload image: $originalName"], 500);
+            }
+        }
+
+        // You can now insert asset record here using $asset_name, $category_id, $sub_category_id, $type_id, $insurance_id, $filenames, etc.
 
 
 
@@ -196,14 +195,13 @@ if (!empty($insurance_name) && !empty($insurance_coverage) && !empty($insurance_
 
         $this->sendJsonResponse(["message" => $success ? "Asset added successfully" : "Failed to add asset"], $success ? 201 : 500);
     }
+    public function batchInsertAssets($assets)
+    {
+        try {
+            $this->connection->beginTransaction();
 
-public function batchInsertAssets($assets)
-{
-    try {
-        $this->connection->beginTransaction();
-
-        // Prepare asset insert once
-        $this->setStatement("INSERT INTO itam_asset (
+            // Prepare asset insert once
+            $this->setStatement("INSERT INTO itam_asset (
             serial_number,
             category_id,
             sub_category_id,
@@ -214,59 +212,65 @@ public function batchInsertAssets($assets)
             warranty_due_date,
             notes,
             insurance_id
-        ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        )");
-        $assetStmt = $this->statement;
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $assetStmt = $this->statement;
 
-        foreach ($assets as $asset) {
-            $insurance_id = null;
+            foreach ($assets as $asset) {
+                // Use insurance_id from payload if exists
+                $insurance_id = $asset['insurance_id'] ?? null;
 
-            // Insert insurance if present
-            if (!empty($asset['insurance_name']) && !empty($asset['insurance_coverage']) && !empty($asset['insurance_date_from']) && !empty($asset['insurance_date_to'])) {
-                $this->setStatement("INSERT INTO itam_asset_insurance (
+                if (!empty($asset['insurance_coverage']) && !empty($asset['insurance_date_from']) && !empty($asset['insurance_date_to'])) {
+                    // Insert new insurance record
+                    $this->setStatement("INSERT INTO itam_asset_insurance (
                     insurance_name,
                     insurance_coverage,
                     insurance_date_from,
                     insurance_date_to
                 ) VALUES (?, ?, ?, ?)");
-                $insuranceStmt = $this->statement;
+                    $insuranceStmt = $this->statement;
 
-                $insuranceStmt->execute([
-                    $asset['insurance_name'],
-                    $asset['insurance_coverage'],
-                    $asset['insurance_date_from'],
-                    $asset['insurance_date_to']
+                    $insuranceStmt->execute([
+                        $asset['insurance_name'],
+                        $asset['insurance_coverage'],
+                        $asset['insurance_date_from'],
+                        $asset['insurance_date_to']
+                    ]);
+
+                    // Override with newly inserted insurance_id
+                    $insurance_id = $this->connection->lastInsertId();
+                } elseif (!empty($asset['insurance_name']) && empty($insurance_id)) {
+                    // Fetch existing insurance ID by name only if insurance_id is not set
+                    $this->setStatement("SELECT insurance_id FROM itam_asset_insurance WHERE insurance_name = ?");
+                    $insuranceStmt = $this->statement;
+
+                    $insuranceStmt->execute([$asset['insurance_name']]);
+                    $existingInsurance = $insuranceStmt->fetch(PDO::FETCH_ASSOC);
+
+                    $insurance_id = $existingInsurance['insurance_id'] ?? null;
+                }
+
+                // Insert asset with insurance_id (either from payload, newly inserted, or fetched)
+                $assetStmt->execute([
+                    $asset['serial_number'] ?? null,
+                    $asset['category_id'] ?? null,
+                    $asset['sub_category_id'] ?? null,
+                    $asset['type_id'] ?? null,
+                    $asset['specifications'] ?? null,
+                    $asset['asset_amount'] ?? null,
+                    $asset['purchase_date'] ?? null,
+                    $asset['warranty_due_date'] ?? null,
+                    $asset['notes'] ?? null,
+                    $insurance_id
                 ]);
-
-                $insurance_id = $this->connection->lastInsertId();
             }
 
-            // Execute asset insert with insurance_id
-            $assetStmt->execute([
-                $asset['serial_number'] ?? null,
-                $asset['category_id'] ?? null,
-                $asset['sub_category_id'] ?? null,
-                $asset['type_id'] ?? null,
-                $asset['specifications'] ?? null,
-                $asset['asset_amount'] ?? null,
-                $asset['purchase_date'] ?? null,
-                $asset['warranty_due_date'] ?? null,
-                $asset['notes'] ?? null,
-                $insurance_id
-            ]);
+            $this->connection->commit();
+            $this->sendJsonResponse(["message" => "Batch insert successful."], 201);
+        } catch (Exception $e) {
+            $this->connection->rollBack();
+            $this->sendJsonResponse(["error" => $e->getMessage()], 500);
         }
-
-        $this->connection->commit();
-        $this->sendJsonResponse(["message" => "Batch insert successful."], 201);
-
-    } catch (Exception $e) {
-        $this->connection->rollBack();
-        $this->sendJsonResponse(["error" => $e->getMessage()], 500);
     }
-}
-
-
 
     function updateAsset($id, $data)
     {

@@ -1,5 +1,5 @@
 <?php
-require_once 'AssetInsurance.php';
+require_once __DIR__ . '/controller/AssetInsurance.php';
 
 header('Content-Type: application/json');
 
