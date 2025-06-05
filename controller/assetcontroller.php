@@ -211,8 +211,11 @@ class Asset extends Controller
             purchase_date,
             warranty_due_date,
             notes,
-            insurance_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            insurance_id,
+            status_id,
+            asset_condition_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 4)");
+
             $assetStmt = $this->statement;
 
             foreach ($assets as $asset) {
