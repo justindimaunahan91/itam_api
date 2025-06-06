@@ -25,8 +25,15 @@ switch ($action) {
     case 'getAllDashboardStats':
         $dashboard->getAllDashboardStats();
         break;
+    case 'getBorrowedAssetsByCompany':
+        $dashboard->getBorrowedAssetsByCompany();
+        break;
+    case 'getIssuedAssetsByCompany':
+        $dashboard->getIssuedAssetsByCompany();
+        break;
+
+
     default:
         echo json_encode(["error" => "Invalid or missing action"]);
         break;
 }
-?>

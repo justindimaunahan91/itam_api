@@ -64,4 +64,40 @@ class Dashboard extends Controller
         $this->statement->execute();
         $this->sendJsonResponse($this->statement->fetch());
     }
+    function getBorrowedAssetsByCompany()
+    {
+        $sql = "
+        SELECT 
+            c.alias AS company_alias,
+            COUNT(t.transaction_id) AS borrowed_count
+        FROM itam_asset_transactions t
+        JOIN itam_asset a ON t.asset_id = a.asset_id
+        JOIN un_companies c ON t.company_id = c.company_id
+        WHERE a.status_id = 2
+        GROUP BY c.company_id, c.alias
+        ORDER BY borrowed_count DESC
+    ";
+
+        $this->setStatement($sql);
+        $this->statement->execute();
+        $this->sendJsonResponse($this->statement->fetchAll(PDO::FETCH_ASSOC));
+    }
+    function getIssuedAssetsByCompany()
+    {
+        $sql = "
+        SELECT 
+            c.alias AS company_alias,
+            COUNT(i.issuance_id) AS issued_count
+        FROM itam_asset_issuance i
+        JOIN itam_asset a ON i.asset_id = a.asset_id
+        JOIN un_companies c ON i.company_id = c.company_id
+        WHERE a.status_id = 3
+        GROUP BY c.company_id, c.alias
+        ORDER BY issued_count DESC
+    ";
+
+        $this->setStatement($sql);
+        $this->statement->execute();
+        $this->sendJsonResponse($this->statement->fetchAll(PDO::FETCH_ASSOC));
+    }
 }
