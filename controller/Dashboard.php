@@ -100,4 +100,80 @@ class Dashboard extends Controller
         $this->statement->execute();
         $this->sendJsonResponse($this->statement->fetchAll(PDO::FETCH_ASSOC));
     }
+
+    function getOverdueBorrowedAssets()
+    {
+        $sql = "
+        SELECT 
+            t.asset_id,
+            a.asset_name,
+            t.user_id,
+            CONCAT(u.first_name, ' ', COALESCE(u.middle_name, ''), ' ', u.last_name) AS full_name,
+            t.due_date,
+            DATEDIFF(CURDATE(), t.due_date) AS days_overdue
+        FROM itam_asset_transactions t
+        JOIN itam_asset a ON t.asset_id = a.asset_id
+        JOIN un_users u ON t.user_id = u.user_id
+        WHERE t.due_date < CURDATE()
+          AND (t.return_date IS NULL OR t.return_date = '')
+    ";
+
+        $this->setStatement($sql);
+        $this->statement->execute();
+        $this->sendJsonResponse($this->statement->fetchAll(PDO::FETCH_ASSOC));
+    }
+    function getUrgentRepairRequests()
+    {
+        $sql = "
+        SELECT 
+            r.repair_request_id,
+            r.asset_id,
+            a.asset_name,
+            r.issue,
+            r.date_reported,
+            CONCAT(u.first_name, ' ', COALESCE(u.middle_name, ''), ' ', u.last_name) AS reported_by,
+            r.urgency_id,
+            u.user_id
+        FROM itam_asset_repair_request r
+        JOIN itam_asset a ON r.asset_id = a.asset_id
+        JOIN un_users u ON r.user_id = u.user_id
+        WHERE r.urgency_id = 1
+    ";
+
+        $this->setStatement($sql);
+        $this->statement->execute();
+        $this->sendJsonResponse($this->statement->fetchAll(PDO::FETCH_ASSOC));
+    }
+    function getMonthlyRepairsThisYear()
+    {
+        $sql = "
+        SELECT 
+            MONTHNAME(repair_start_date) AS month,
+            COUNT(*) AS repair_count
+        FROM itam_asset_repair_request
+        WHERE YEAR(repair_start_date) = YEAR(CURDATE())
+        GROUP BY MONTH(repair_start_date), MONTHNAME(repair_start_date)
+        ORDER BY MONTH(repair_start_date)
+    ";
+
+        $this->setStatement($sql);
+        $this->statement->execute();
+        $this->sendJsonResponse($this->statement->fetchAll(PDO::FETCH_ASSOC));
+    }
+    function getAssetsByCondition()
+    {
+        $sql = "
+        SELECT 
+            ac.asset_condition_name,
+            COUNT(a.asset_id) AS count
+        FROM itam_asset a
+        JOIN itam_asset_condition ac ON a.asset_condition_id = ac.asset_condition_id
+        GROUP BY a.asset_condition_id, ac.asset_condition_name
+        ORDER BY count DESC
+    ";
+
+        $this->setStatement($sql);
+        $this->statement->execute();
+        $this->sendJsonResponse($this->statement->fetchAll(PDO::FETCH_ASSOC));
+    }
 }

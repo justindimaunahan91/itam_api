@@ -31,8 +31,18 @@ switch ($action) {
     case 'getIssuedAssetsByCompany':
         $dashboard->getIssuedAssetsByCompany();
         break;
-
-
+    case 'getOverdueBorrowedAssets':
+        $dashboard->getOverdueBorrowedAssets();
+        break;
+    case 'getUrgentRepairRequests':
+        $dashboard->getUrgentRepairRequests();
+        break;
+    case 'getMonthlyRepairsThisYear':
+        $dashboard->getMonthlyRepairsThisYear();
+        break;
+    case 'getAssetsByCondition':
+        $dashboard->getAssetsByCondition();
+        break;
     default:
         echo json_encode(["error" => "Invalid or missing action"]);
         break;
