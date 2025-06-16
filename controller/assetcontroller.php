@@ -50,6 +50,7 @@ class Asset extends Controller
 
     public function insertAsset($data)
     {
+
         extract($data);
 
         // Validate required field
@@ -168,10 +169,18 @@ class Asset extends Controller
         // You can now insert asset record here using $asset_name, $category_id, $sub_category_id, $type_id, $insurance_id, $filenames, etc.
 
 
+        if (empty($serial_number)) {
+            $this->sendJsonResponse(["error" => "Missing serial number."], 400);
+        }
+
+        if (empty($asset_name)) {
+            $this->sendJsonResponse(["error" => "Generated asset name is empty."], 400);
+        }
 
         // Insert asset with file path
         $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, status_id, location, specifications, asset_amount, warranty_duration, warranty_due_date, purchase_date, notes, insurance_id, file) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
         $success = $this->statement->execute([
             $asset_name,
             $serial_number,

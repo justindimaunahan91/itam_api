@@ -1,12 +1,14 @@
 <?php
 require_once "/controller.php";
 
-class AssetTransactionController extends Controller {
+class AssetTransactionController extends Controller
+{
 
     /**
      * Send JSON response with HTTP status code
      */
-    protected function sendJsonResponse($data, $status = 200) {
+    protected function sendJsonResponse($data, $status = 200)
+    {
         http_response_code($status);
         header('Content-Type: application/json');
         echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
@@ -16,7 +18,8 @@ class AssetTransactionController extends Controller {
     /**
      * Retrieve JSON input
      */
-    private function getJsonInput() {
+    private function getJsonInput()
+    {
         $input = json_decode(file_get_contents('php://input'), true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             $this->sendJsonResponse(['error' => 'Invalid JSON input'], 400);
@@ -27,7 +30,8 @@ class AssetTransactionController extends Controller {
     /**
      * Retrieve all asset transactions
      */
-    function getAssetTransactions() {
+    function getAssetTransactions()
+    {
         try {
             $this->setStatement("SELECT t.borrow_transaction_id, t.user_id, t.asset_id, a.asset_name, 
                                          t.date_borrowed, t.due_date, t.return_date, t.duration, 
@@ -47,7 +51,8 @@ class AssetTransactionController extends Controller {
     /**
      * Retrieve asset transactions for a specific user
      */
-    function getTransactionsByUser($user_id) {
+    function getTransactionsByUser($user_id)
+    {
         try {
             $this->setStatement("SELECT t.borrow_transaction_id, t.asset_id, a.asset_name, 
                                          t.date_borrowed, t.due_date, t.return_date, t.duration, 
@@ -68,11 +73,12 @@ class AssetTransactionController extends Controller {
     /**
      * Add a new asset transaction
      */
-    function addAssetTransaction($user_id, $asset_id, $date_borrowed, $due_date, $return_date = null, $duration = null, $asset_condition_id, $remarks = null, ) {
+    function addAssetTransaction($user_id, $asset_id, $date_borrowed, $due_date, $return_date = null, $duration = null, $asset_condition_id, $remarks = null,)
+    {
         try {
             $this->setStatement("INSERT INTO itam_asset_transactions (user_id, asset_id, date_borrowed, due_date, return_date, duration, asset_condition_id, remarks, )
                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $success = $this->statement->execute([$user_id, $asset_id, $date_borrowed, $due_date, $return_date, $duration, $asset_condition_id, $remarks, ]);
+            $success = $this->statement->execute([$user_id, $asset_id, $date_borrowed, $due_date, $return_date, $duration, $asset_condition_id, $remarks,]);
 
             $this->sendJsonResponse(["message" => $success ? "Transaction added successfully" : "Failed to add transaction"], $success ? 201 : 500);
         } catch (Exception $e) {
@@ -83,12 +89,13 @@ class AssetTransactionController extends Controller {
     /**
      * Update an existing asset transaction
      */
-    function updateAssetTransaction($borrow_transaction_id, $user_id, $asset_id, $date_borrowed, $due_date, $return_date, $duration, $asset_condition_id, $remarks) {
+    function updateAssetTransaction($borrow_transaction_id, $asset_id, $date_borrowed, $return_date, $duration, $asset_condition_id)
+    {
         try {
             $this->setStatement("UPDATE itam_asset_transactions 
-                                 SET user_id = ?, asset_id = ?, date_borrowed = ?, due_date = ?, return_date = ?, duration = ?, asset_condition_id = ?, remarks = ?
-                                 WHERE borrow_transaction_id = ?");
-            $success = $this->statement->execute([$user_id, $asset_id, $date_borrowed, $due_date, $return_date, $duration, $asset_condition_id, $remarks, $borrow_transaction_id]);
+                             SET asset_id = ?, date_borrowed = ?, return_date = ?, duration = ?, asset_condition_id = ?
+                             WHERE borrow_transaction_id = ?");
+            $success = $this->statement->execute([$asset_id, $date_borrowed, $return_date, $duration, $borrow_transaction_id]);
 
             $this->sendJsonResponse(["message" => $success ? "Transaction updated successfully" : "Update failed"], $success ? 200 : 500);
         } catch (Exception $e) {
@@ -96,10 +103,12 @@ class AssetTransactionController extends Controller {
         }
     }
 
+
     /**
      * Delete an asset transaction
      */
-    function deleteAssetTransaction($borrow_transaction_id) {
+    function deleteAssetTransaction($borrow_transaction_id)
+    {
         try {
             $this->setStatement("DELETE FROM itam_asset_transactions WHERE borrow_transaction_id = ?");
             $success = $this->statement->execute([$borrow_transaction_id]);

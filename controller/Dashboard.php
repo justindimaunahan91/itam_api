@@ -40,7 +40,6 @@ class Dashboard extends Controller
         $this->sendJsonResponse($this->statement->fetch());
     }
 
-    // Optionally: one endpoint for all counts
     function getAllDashboardStats()
     {
         $sql = "
@@ -67,16 +66,17 @@ class Dashboard extends Controller
     function getBorrowedAssetsByCompany()
     {
         $sql = "
-        SELECT 
-            c.alias AS company_alias,
-            COUNT(t.transaction_id) AS borrowed_count
-        FROM itam_asset_transactions t
-        JOIN itam_asset a ON t.asset_id = a.asset_id
-        JOIN un_companies c ON t.company_id = c.company_id
-        WHERE a.status_id = 2
-        GROUP BY c.company_id, c.alias
-        ORDER BY borrowed_count DESC
-    ";
+                SELECT 
+                    c.company_id,
+                    c.alias,
+                    a.status_id,
+                    COUNT(*) AS count
+                FROM itam_asset_transactions t
+                JOIN itam_asset a ON t.asset_id = a.asset_id
+                JOIN un_companies c ON t.company_id = c.company_id
+                GROUP BY c.company_id, c.alias, a.status_id
+                ORDER BY c.company_id;
+                    ";
 
         $this->setStatement($sql);
         $this->statement->execute();
@@ -84,16 +84,17 @@ class Dashboard extends Controller
     }
     function getIssuedAssetsByCompany()
     {
-        $sql = "
-        SELECT 
-            c.alias AS company_alias,
-            COUNT(i.issuance_id) AS issued_count
-        FROM itam_asset_issuance i
-        JOIN itam_asset a ON i.asset_id = a.asset_id
-        JOIN un_companies c ON i.company_id = c.company_id
-        WHERE a.status_id = 3
-        GROUP BY c.company_id, c.alias
-        ORDER BY issued_count DESC
+        $sql = "SELECT 
+    c.alias AS alias,
+    COUNT(i.issuance_id) AS issued_count
+FROM itam_asset_issuance i
+JOIN itam_asset a ON i.asset_id = a.asset_id
+JOIN un_users u ON i.user_id = u.user_id
+JOIN un_companies c ON u.company_id = c.company_id
+WHERE a.status_id = 3
+GROUP BY c.company_id, c.alias
+ORDER BY issued_count DESC
+
     ";
 
         $this->setStatement($sql);

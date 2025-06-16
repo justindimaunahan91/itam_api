@@ -114,6 +114,7 @@ function handleRequest($controller, $actions)
                 break;
 
             case 'POST':
+                
                 if (!isset($_POST['data'])) {
                     sendJsonResponse(["error" => "Invalid request, missing data"], 400);
                 }
@@ -148,11 +149,13 @@ function handleRequest($controller, $actions)
                         sendJsonResponse(["error" => "Missing data"], 400);
                     }
 
-                    $data = json_decode($_POST['data'], true); // Use $_POST['data'] only!
+                   $data = json_decode($_POST['data'], true); // Use $_POST['data'] only!
+
 
                     if ($data === null) {
                         sendJsonResponse(["error" => "Invalid JSON input"], 400);
                     }
+                    
 
                     $success = call_user_func([$controller, $actions['batchInsert']], $data);
 

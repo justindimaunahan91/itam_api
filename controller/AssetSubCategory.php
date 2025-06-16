@@ -47,7 +47,6 @@ function insertSubCategory($category_id, $sub_category_name = null)
                 ];
             }
 
-            // ✅ Generate 2-letter code
             $words = preg_split('/\s+/', trim($sub_category_name));
             if (count($words) === 1) {
                 $code = strtoupper(substr($words[0], 0, 2)); // 1 word: take first 2 letters
