@@ -14,9 +14,9 @@ class AssetCategory extends Controller {
         $this->sendJsonResponse($this->statement->fetch());
     }
 
-    function insertCategory($category_name, $status) {
-        $this->setStatement("INSERT INTO itam_asset_category (category_name, status) VALUES (?, ?)");
-        $success = $this->statement->execute([$category_name, $status]);
+    function insertCategory($category_name) {
+        $this->setStatement("INSERT INTO itam_asset_category (category_name) VALUES (?)");
+        $success = $this->statement->execute([$category_name]);
         $this->sendJsonResponse(["message" => $success ? "Category added successfully" : "Failed to add category"], $success ? 201 : 500);
     }
 

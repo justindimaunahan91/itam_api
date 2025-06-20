@@ -114,7 +114,20 @@ function handleRequest($controller, $actions)
                 break;
 
             case 'POST':
-                // ✅ Special case: treat POST as PUT-style update
+                $data['status'] = $data['status'] ?? $data['status_id'] ?? null;
+
+                if ($actions['create'] === 'insertCategory') {
+                    $data = json_decode($_POST['data'] ?? '', true);
+
+                    if (!isset($data['category_name']) || !isset($data['status'])) {
+                        sendJsonResponse(["error" => "Missing category_name or status"], 400);
+                    }
+
+                    $success = call_user_func_array([$controller, $actions['create']], [$data['category_name'], $data['status']]);
+                    sendJsonResponse(["message" => $success ? "Category added successfully" : "Creation failed"], $success ? 201 : 500);
+                }
+
+
                 if (isset($_GET['action']) && $_GET['action'] === 'update') {
 
                     if (empty($_POST['serial_number'])) {
@@ -155,8 +168,6 @@ function handleRequest($controller, $actions)
                     return;
                 }
 
-                // ✅ Regular POST logic (create, batch insert, etc.)
-                // 🧠 Check if this is batch insert
                 if (isset($_GET['action']) && $_GET['action'] === 'batchInsert') {
                     if (!isset($_POST['data'])) {
                         sendJsonResponse(["error" => "Missing batch insert data"], 400);
@@ -185,21 +196,47 @@ function handleRequest($controller, $actions)
                     }
 
                     foreach ($files['name'] as $index => $name) {
-                        if ($files['error'][$index] === UPLOAD_ERR_OK) {
-                            $fileName = time() . "_" . basename($name);
-                            $filePath = "uploads/" . $fileName;
-                            move_uploaded_file($files['tmp_name'][$index], $filePath);
-                            $filenames[] = $filePath;
+                        $tmpName = $files['tmp_name'][$index];
+                        $error = $files['error'][$index];
+
+                        if ($error === UPLOAD_ERR_OK && is_uploaded_file($tmpName)) {
+                            $uniqueName = uniqid() . "_" . basename($name);
+                            $destinationPath = $uploadDir . $uniqueName;
+
+                            if (move_uploaded_file($tmpName, $destinationPath)) {
+                                $filenames[] = "uploads/" . $uniqueName;
+                            } else {
+                                sendJsonResponse([
+                                    "error" => "❌ Failed to move file: $name",
+                                    "debug" => [
+                                        "tmp_name" => $tmpName,
+                                        "destination" => $destinationPath,
+                                        "is_uploaded_file" => is_uploaded_file($tmpName),
+                                        "file_exists_tmp" => file_exists($tmpName)
+                                    ]
+                                ], 500);
+                            }
+                        } else {
+                            sendJsonResponse([
+                                "error" => "❌ File upload error for $name",
+                                "debug" => [
+                                    "error_code" => $error,
+                                    "tmp_name" => $tmpName,
+                                    "is_uploaded_file" => is_uploaded_file($tmpName),
+                                    "file_exists_tmp" => file_exists($tmpName)
+                                ]
+                            ], 500);
                         }
                     }
                 }
 
+
                 $data['filenames'] = $filenames;
 
-                // ✅ You may also validate required fields
-                if (!isset($data['category_id'])) {
+                if ($actions['create'] === 'insertAsset' && !isset($data['category_id'])) {
                     sendJsonResponse(["error" => "Missing category_id"], 400);
                 }
+
 
                 $success = call_user_func([$controller, $actions['create']], $data);
                 sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
