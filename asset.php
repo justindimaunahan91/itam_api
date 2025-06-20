@@ -114,17 +114,68 @@ function handleRequest($controller, $actions)
                 break;
 
             case 'POST':
-                
-                if (!isset($_POST['data'])) {
-                    sendJsonResponse(["error" => "Invalid request, missing data"], 400);
+                // ✅ Special case: treat POST as PUT-style update
+                if (isset($_GET['action']) && $_GET['action'] === 'update') {
+
+                    if (empty($_POST['serial_number'])) {
+                        sendJsonResponse(["error" => "Missing serial_number"], 400);
+                    }
+
+                    $data = $_POST;
+
+
+                    $files = $_FILES['file'] ?? null;
+                    $filenames = [];
+
+                    if ($files && is_array($files['name'])) {
+                        $uploadDir = __DIR__ . "/uploads/";
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0777, true);
+                        }
+
+                        foreach ($files['name'] as $index => $name) {
+                            if ($files['error'][$index] === UPLOAD_ERR_OK) {
+                                $fileName = time() . "_" . basename($name);
+                                $filePath = "uploads/" . $fileName;
+                                move_uploaded_file($files['tmp_name'][$index], $filePath);
+                                $filenames[] = $filePath;
+                            }
+                        }
+                    }
+
+                    $data['filenames'] = $filenames;
+
+                    if (!isset($_GET['id'])) {
+                        sendJsonResponse(["error" => "Missing asset_id in query string"], 400);
+                    }
+
+                    $id = $_GET['id'];
+                    $success = call_user_func([$controller, $actions['update']], $id, $data);
+                    sendJsonResponse(["message" => $success ? "Updated successfully" : "Update failed"], $success ? 200 : 500);
+                    return;
                 }
 
-                $data = json_decode($_POST['data'], true);
-                if (!$data) {
-                    sendJsonResponse(["error" => "Invalid JSON input"], 400);
+                // ✅ Regular POST logic (create, batch insert, etc.)
+                // 🧠 Check if this is batch insert
+                if (isset($_GET['action']) && $_GET['action'] === 'batchInsert') {
+                    if (!isset($_POST['data'])) {
+                        sendJsonResponse(["error" => "Missing batch insert data"], 400);
+                    }
+
+                    $data = json_decode($_POST['data'], true);
+                    if (!is_array($data)) {
+                        sendJsonResponse(["error" => "Decoded batch data is not an array"], 400);
+                    }
+
+                    // handle files if needed...
+
+                    $success = call_user_func([$controller, $actions['batchInsert']], $data);
+                    sendJsonResponse(["message" => "Batch insert completed."], 201);
                 }
 
-                $files = isset($_FILES['file']) ? $_FILES['file'] : null;
+                // 🧠 If NOT batchInsert, treat it as single insert (FormData-style)
+                $data = $_POST;
+                $files = $_FILES['file'] ?? null;
                 $filenames = [];
 
                 if ($files && is_array($files['name'])) {
@@ -138,24 +189,53 @@ function handleRequest($controller, $actions)
                             $fileName = time() . "_" . basename($name);
                             $filePath = "uploads/" . $fileName;
                             move_uploaded_file($files['tmp_name'][$index], $filePath);
-                            array_push($filenames, $filePath);
+                            $filenames[] = $filePath;
                         }
                     }
                 }
 
                 $data['filenames'] = $filenames;
-                if ($actions['batchInsert'] === 'batchInsertAssets') {
-                    if (!isset($_POST['data'])) {
-                        sendJsonResponse(["error" => "Missing data"], 400);
+
+                // ✅ You may also validate required fields
+                if (!isset($data['category_id'])) {
+                    sendJsonResponse(["error" => "Missing category_id"], 400);
+                }
+
+                $success = call_user_func([$controller, $actions['create']], $data);
+                sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
+
+
+                $data = json_decode($_POST['data'], true);
+                if (!is_array($data)) {
+                    sendJsonResponse(["error" => "Decoded data is not an array"], 400);
+                }
+
+
+                $files = $_FILES['file'] ?? null;
+                $filenames = [];
+
+                if ($files && is_array($files['name'])) {
+                    $uploadDir = __DIR__ . "/uploads/";
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0777, true);
                     }
 
-                   $data = json_decode($_POST['data'], true); // Use $_POST['data'] only!
+                    foreach ($files['name'] as $index => $name) {
+                        if ($files['error'][$index] === UPLOAD_ERR_OK) {
+                            $fileName = time() . "_" . basename($name);
+                            $filePath = "uploads/" . $fileName;
+                            move_uploaded_file($files['tmp_name'][$index], $filePath);
+                            $filenames[] = $filePath;
+                        }
+                    }
+                }
 
+                $data['filenames'] = $filenames;
 
+                if ($actions['batchInsert'] === 'batchInsertAssets') {
                     if ($data === null) {
                         sendJsonResponse(["error" => "Invalid JSON input"], 400);
                     }
-                    
 
                     $success = call_user_func([$controller, $actions['batchInsert']], $data);
 
@@ -165,7 +245,6 @@ function handleRequest($controller, $actions)
                         sendJsonResponse(["message" => "Batch insert completed."], 201);
                     }
                 } elseif ($actions['create'] === 'insertAsset') {
-                    // Single insert
                     if (!isset($data['category_id'])) {
                         sendJsonResponse(["error" => "Missing category_id"], 400);
                     }
@@ -196,7 +275,7 @@ function handleRequest($controller, $actions)
                     if (isset($result['error'])) {
                         sendJsonResponse($result, 500);
                     } elseif (isset($result['sub_category_id'])) {
-                        sendJsonResponse($result, 200); // Sub-category exists
+                        sendJsonResponse($result, 200);
                     } elseif (isset($result['message'])) {
                         sendJsonResponse($result, 201);
                     } else {
@@ -209,6 +288,8 @@ function handleRequest($controller, $actions)
 
             case 'PUT':
                 $data = json_decode(file_get_contents('php://input'), true);
+
+                var_dump($data);
                 if (!isset($data['id']) || empty($data['id']))
                     sendJsonResponse(["error" => "Missing 'id' field for update"], 400);
 

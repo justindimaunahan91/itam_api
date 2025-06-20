@@ -28,6 +28,7 @@ switch ($method) {
 
     case 'PUT':
         $data = getJsonInput();
+        
         if (!isset($data['borrow_transaction_id'])) sendJsonResponse(["error" => "Missing 'borrow_transaction_id' field"], 400);
         $success = call_user_func_array([$controller, 'updateAssetTransaction'], array_values($data));
         sendJsonResponse(["message" => $success ? "Updated successfully" : "Update failed"]);

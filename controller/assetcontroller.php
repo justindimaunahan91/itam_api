@@ -48,28 +48,51 @@ class Asset extends Controller
     // }
 
 
-    public function insertAsset($data)
+    public function insertAsset()
     {
+        $data = $_POST;
 
-        extract($data);
+        if (empty($data['serial_number'])) {
+            $this->sendJsonResponse(["error" => "Serial number is required."], 400);
+        }
+        $insurance_id = $data['insurance_id'] ?? null;
+        $serial_number = trim($data['serial_number'] ?? '');
+        $brand = trim($data['brand'] ?? '');
+        $category_id = $data['category_id'] ?? null;
+        $sub_category_id = $data['sub_category_id'] ?? null;
+        $type_id = $data['type_id'] ?? null;
+        $location = trim($data['location'] ?? '');
+        $specifications = trim($data['specifications'] ?? '');
+        $asset_amount = $data['asset_amount'] ?? 0;
+        $asset_name = $data['asset_name'] ?? '';
+        $warranty_duration = $data['warranty_duration'] ?? null;
+        $warranty_due_date = $data['warranty_due_date'] ?? null;
+        $purchase_date = $data['purchase_date'] ?? null;
+        $notes = trim($data['notes'] ?? '');
+        $insurance_name = trim($data['insurance_name'] ?? '');
+        $insurance_coverage = trim($data['insurance_coverage'] ?? '');
+        $insurance_date_from = $data['insurance_date_from'] ?? null;
+        $insurance_date_to = $data['insurance_date_to'] ?? null;
+
 
         // Validate required field
         if (!isset($category_id)) {
             $this->sendJsonResponse(["error" => "Missing category_id"], 400);
         }
 
-        $sub_category_id = null;
+        $sub_category_name = trim($data['sub_category_name'] ?? '');
 
-        // If a subcategory name is provided, insert it into the subcategory table
         if (!empty($sub_category_name)) {
+            // Insert new subcategory and get ID
             $this->setStatement("INSERT INTO itam_asset_sub_category (category_id, sub_category_name, code) VALUES (?, ?, ?)");
             $this->statement->execute([
                 $category_id,
                 $sub_category_name,
-                strtoupper(substr($sub_category_name, 0, 2)) // Generate a code using the first 2 letters
+                strtoupper(substr($sub_category_name, 0, 2))
             ]);
-            $sub_category_id = $this->connection->lastInsertId(); // Get the newly inserted subcategory ID
+            $sub_category_id = $this->connection->lastInsertId();
         }
+
 
         // Count how many assets already exist with the same category and subcategory, and no type
         $this->setStatement("SELECT COUNT(*) as count FROM itam_asset WHERE sub_category_id = ? AND category_id = ? AND type_id IS NULL");
@@ -111,9 +134,14 @@ class Asset extends Controller
             }
         }
 
-        // Optional: Insert insurance record
-        $insurance_id = null;
-        if (!empty($insurance_name) && !empty($insurance_coverage) && !empty($insurance_date_from) && !empty($insurance_date_to)) {
+
+        if (
+            empty($insurance_id) &&
+            !empty($insurance_name) &&
+            !empty($insurance_coverage) &&
+            !empty($insurance_date_from) &&
+            !empty($insurance_date_to)
+        ) {
             $this->setStatement("INSERT INTO itam_asset_insurance (insurance_name, insurance_coverage, insurance_date_from, insurance_date_to) VALUES (?, ?, ?, ?)");
             $insuranceSuccess = $this->statement->execute([
                 $insurance_name,
@@ -133,11 +161,10 @@ class Asset extends Controller
         $allowedTypes = explode(',', $this->getSetting('allowed_file_types')); // e.g. 'jpg,jpeg,png,webp'
 
         // Validate uploaded images
-        if (!isset($_FILES['images'])) {
+        if (!isset($_FILES['file'])) {
             $this->sendJsonResponse(["error" => "No image files uploaded."], 400);
         }
-
-        $uploadedImages = $_FILES['images'];
+        $uploadedImages = $_FILES['file'];
         $filenames = [];
 
         // check image count
@@ -162,7 +189,15 @@ class Asset extends Controller
             if (move_uploaded_file($tmpName, $destination)) {
                 $filenames[] = $destination;
             } else {
-                $this->sendJsonResponse(["error" => "Failed to upload image: $originalName"], 500);
+                $this->sendJsonResponse([
+                    "error" => "❌ Failed to move file: $originalName",
+                    "debug" => [
+                        "tmp_name" => $tmpName,
+                        "destination" => $destination,
+                        "is_uploaded_file" => is_uploaded_file($tmpName),
+                        "file_exists_tmp" => file_exists($tmpName)
+                    ]
+                ], 500);
             }
         }
 
@@ -175,6 +210,40 @@ class Asset extends Controller
 
         if (empty($asset_name)) {
             $this->sendJsonResponse(["error" => "Generated asset name is empty."], 400);
+        }
+
+        // Collect missing required fields
+        $requiredFields = [
+            'serial_number',
+            'asset_amount',
+            'warranty_duration',
+            'brand',
+            'category_id',
+            'sub_category_id',
+            'type_id',
+            'location',
+            'specifications',
+            'asset_amount',
+            'warranty_due_date',
+            'purchase_date',
+            'notes',
+            'file',
+            'insurance_id'
+        ];
+
+        $missingFields = [];
+
+        foreach ($requiredFields as $field) {
+            if (!isset($data[$field]) || trim($data[$field]) === '') {
+                $missingFields[] = $field;
+            }
+        }
+
+        if (!empty($missingFields)) {
+            $this->sendJsonResponse([
+                "error" => "Missing required fields",
+                "missing" => $missingFields
+            ], 400);
         }
 
         // Insert asset with file path
@@ -199,11 +268,18 @@ class Asset extends Controller
             $notes,
             $insurance_id === null ? null : $insurance_id, // Use the insurance_id if insurance exists
             implode(', ', $filenames)
+
+
         ]);
 
-
-        $this->sendJsonResponse(["message" => $success ? "Asset added successfully" : "Failed to add asset"], $success ? 201 : 500);
+        $this->sendJsonResponse(
+            ["message" => $success ? "Asset added successfully" : "Failed to add asset"],
+            $success ? 201 : 500
+        );
     }
+
+
+
     public function batchInsertAssets($assets)
     {
         try {
@@ -287,14 +363,55 @@ class Asset extends Controller
     function updateAsset($id, $data)
     {
         extract($data);
+
+        // Optional: handle filenames (if file upload included in update)
+        $fileColumnValue = null;
+        if (isset($data['filenames']) && is_array($data['filenames']) && count($data['filenames']) > 0) {
+            $fileColumnValue = implode(', ', $data['filenames']);
+        }
+
         $this->setStatement("UPDATE itam_asset 
-            SET asset_name = ?, serial_number = ?, category_id = ?, sub_category_id = ?, type_id = ?, asset_condition_id = ?, status_id = ?, location = ?, specifications = ?, warranty_duration = ?, aging = ?, warranty_due_date = ?, purchase_date = ?, notes = ? 
-            WHERE asset_id = ?");
+        SET asset_name = ?, 
+            serial_number = ?, 
+            brand = ?, 
+            category_id = ?, 
+            sub_category_id = ?, 
+            type_id = ?, 
+            asset_condition_id = ?, 
+            status_id = ?, 
+            location = ?, 
+            specifications = ?, 
+            asset_amount = ?, 
+            warranty_duration = ?, 
+            warranty_due_date = ?, 
+            purchase_date = ?, 
+            notes = ?, 
+            file = ?  -- ← this line added
+        WHERE asset_id = ?");
 
-        $success = $this->statement->execute([$asset_name, $serial_number, $category_id, $sub_category_id, $type_id, $asset_condition_id, $status_id, $location, $specifications, $warranty_duration, $aging, $warranty_due_date, $purchase_date, $notes, $id]);
+        $success = $this->statement->execute([
+            $asset_name,
+            $serial_number,
+            $brand,
+            $category_id,
+            $sub_category_id,
+            $type_id,
+            $asset_condition_id,
+            $status_id,
+            $location,
+            $specifications,
+            $asset_amount,
+            $warranty_duration,
+            $warranty_due_date,
+            $purchase_date,
+            $notes,
+            $fileColumnValue, // ← this value
+            $id
+        ]);
 
-        $this->sendJsonResponse(["message" => $success ? "Asset updated successfully" : "Failed to update asset"], $success ? 200 : 500);
+        return $success;
     }
+
 
     function deleteAsset($id)
     {
