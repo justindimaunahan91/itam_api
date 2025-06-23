@@ -196,36 +196,11 @@ function handleRequest($controller, $actions)
                     }
 
                     foreach ($files['name'] as $index => $name) {
-                        $tmpName = $files['tmp_name'][$index];
-                        $error = $files['error'][$index];
-
-                        if ($error === UPLOAD_ERR_OK && is_uploaded_file($tmpName)) {
-                            $uniqueName = uniqid() . "_" . basename($name);
-                            $destinationPath = $uploadDir . $uniqueName;
-
-                            if (move_uploaded_file($tmpName, $destinationPath)) {
-                                $filenames[] = "uploads/" . $uniqueName;
-                            } else {
-                                sendJsonResponse([
-                                    "error" => "❌ Failed to move file: $name",
-                                    "debug" => [
-                                        "tmp_name" => $tmpName,
-                                        "destination" => $destinationPath,
-                                        "is_uploaded_file" => is_uploaded_file($tmpName),
-                                        "file_exists_tmp" => file_exists($tmpName)
-                                    ]
-                                ], 500);
-                            }
-                        } else {
-                            sendJsonResponse([
-                                "error" => "❌ File upload error for $name",
-                                "debug" => [
-                                    "error_code" => $error,
-                                    "tmp_name" => $tmpName,
-                                    "is_uploaded_file" => is_uploaded_file($tmpName),
-                                    "file_exists_tmp" => file_exists($tmpName)
-                                ]
-                            ], 500);
+                        if ($files['error'][$index] === UPLOAD_ERR_OK) {
+                            $fileName = time() . "_" . basename($name);
+                            $filePath = "uploads/" . $fileName;
+                            move_uploaded_file($files['tmp_name'][$index], $filePath);
+                            $filenames[] = $filePath;
                         }
                     }
                 }
