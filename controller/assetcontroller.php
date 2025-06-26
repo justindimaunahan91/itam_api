@@ -48,19 +48,19 @@ class Asset extends Controller
     // }
 
 
-    public function insertAsset()
+    public function insertAsset($data)
     {
-        $data = $_POST;
-
+        // $data = $_POST;
+        // $data = json_decode($data['data'] ?? '', true);
         if (empty($data['serial_number'])) {
             $this->sendJsonResponse(["error" => "Serial number is required."], 400);
         }
         $insurance_id = $data['insurance_id'] ?? null;
         $serial_number = trim($data['serial_number'] ?? '');
         $brand = trim($data['brand'] ?? '');
-        $category_id = $data['category_id'] ?? null;
-        $sub_category_id = $data['sub_category_id'] ?? null;
-        $type_id = $data['type_id'] ?? null;
+        $category_id = $data['category']['category_id'] ?? null;
+        $sub_category_id = $data['category']['sub_category_id'] ?? null;
+        $type_id = $data['category']['type_id'] ?? null;
         $location = trim($data['location'] ?? '');
         $specifications = trim($data['specifications'] ?? '');
         $asset_amount = $data['asset_amount'] ?? 0;
@@ -156,50 +156,50 @@ class Asset extends Controller
         }
 
 
-        // Load image settings
-        $maxImages = (int) $this->getSetting('max_images_per_item');
-        $allowedTypes = explode(',', $this->getSetting('allowed_file_types')); // e.g. 'jpg,jpeg,png,webp'
+        // // Load image settings
+        // $maxImages = (int) $this->getSetting('max_images_per_item');
+        // $allowedTypes = explode(',', $this->getSetting('allowed_file_types')); // e.g. 'jpg,jpeg,png,webp'
 
-        // Validate uploaded images
-        if (!isset($_FILES['file'])) {
-            $this->sendJsonResponse(["error" => "No image files uploaded."], 400);
-        }
-        $uploadedImages = $_FILES['file'];
-        $filenames = [];
+        // // Validate uploaded images
+        // if (!isset($_FILES['file'])) {
+        //     $this->sendJsonResponse(["error" => "No image files uploaded."], 400);
+        // }
+        // $uploadedImages = $_FILES['file'];
+        // $filenames = [];
 
-        // check image count
-        $imageCount = count(array_filter($uploadedImages['name']));
-        if ($imageCount > $maxImages) {
-            $this->sendJsonResponse(["error" => "Maximum of $maxImages images allowed."], 400);
-        }
+        // // check image count
+        // $imageCount = count(array_filter($uploadedImages['name']));
+        // if ($imageCount > $maxImages) {
+        //     $this->sendJsonResponse(["error" => "Maximum of $maxImages images allowed."], 400);
+        // }
 
-        // Validate and save each image
-        for ($i = 0; $i < $imageCount; $i++) {
-            $tmpName = $uploadedImages['tmp_name'][$i];
-            $originalName = $uploadedImages['name'][$i];
-            $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+        // // Validate and save each image
+        // for ($i = 0; $i < $imageCount; $i++) {
+        //     $tmpName = $uploadedImages['tmp_name'][$i];
+        //     $originalName = $uploadedImages['name'][$i];
+        //     $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
 
-            if (!in_array($ext, $allowedTypes)) {
-                $this->sendJsonResponse(["error" => "File type .$ext is not allowed."], 400);
-            }
+        //     if (!in_array($ext, $allowedTypes)) {
+        //         $this->sendJsonResponse(["error" => "File type .$ext is not allowed."], 400);
+        //     }
 
-            $newName = uniqid() . '.' . $ext;
-            $destination = "uploads/" . $newName;
+        //     $newName = uniqid() . '.' . $ext;
+        //     $destination = "uploads/" . $newName;
 
-            if (move_uploaded_file($tmpName, $destination)) {
-                $filenames[] = $destination;
-            } else {
-                $this->sendJsonResponse([
-                    "error" => "❌ Failed to move file: $originalName",
-                    "debug" => [
-                        "tmp_name" => $tmpName,
-                        "destination" => $destination,
-                        "is_uploaded_file" => is_uploaded_file($tmpName),
-                        "file_exists_tmp" => file_exists($tmpName)
-                    ]
-                ], 500);
-            }
-        }
+        //     if (move_uploaded_file($tmpName, $destination)) {
+        //         $filenames[] = $destination;
+        //     } else {
+        //         $this->sendJsonResponse([
+        //             "error" => "❌ Failed to move file: $originalName",
+        //             "debug" => [
+        //                 "tmp_name" => $tmpName,
+        //                 "destination" => $destination,
+        //                 "is_uploaded_file" => is_uploaded_file($tmpName),
+        //                 "file_exists_tmp" => file_exists($tmpName)
+        //             ]
+        //         ], 500);
+        //     }
+        // }
 
         // You can now insert asset record here using $asset_name, $category_id, $sub_category_id, $type_id, $insurance_id, $filenames, etc.
 
@@ -233,18 +233,18 @@ class Asset extends Controller
 
         $missingFields = [];
 
-        foreach ($requiredFields as $field) {
-            if (!isset($data[$field]) || trim($data[$field]) === '') {
-                $missingFields[] = $field;
-            }
-        }
+        // foreach ($requiredFields as $field) {
+        //     if (!isset($data[$field]) || trim($data[$field]) === '') {
+        //         $missingFields[] = $field;
+        //     }
+        // }
 
-        if (!empty($missingFields)) {
-            $this->sendJsonResponse([
-                "error" => "Missing required fields",
-                "missing" => $missingFields
-            ], 400);
-        }
+        // if (!empty($missingFields)) {
+        //     $this->sendJsonResponse([
+        //         "error" => "Missing required fields",
+        //         "missing" => $missingFields
+        //     ], 400);
+        // }
 
         // Insert asset with file path
         $this->setStatement("INSERT INTO itam_asset (asset_name, serial_number, brand, category_id, sub_category_id, asset_condition_id, type_id, status_id, location, specifications, asset_amount, warranty_duration, warranty_due_date, purchase_date, notes, insurance_id, file) 
@@ -267,7 +267,7 @@ class Asset extends Controller
             $purchase_date,
             $notes,
             $insurance_id === null ? null : $insurance_id, // Use the insurance_id if insurance exists
-            implode(', ', $filenames)
+            implode(', ', $data['filenames'])
 
 
         ]);
@@ -362,9 +362,6 @@ class Asset extends Controller
 
     function updateAsset($id, $data)
     {
-        extract($data);
-
-        // Optional: handle filenames (if file upload included in update)
         $fileColumnValue = null;
         if (isset($data['filenames']) && is_array($data['filenames']) && count($data['filenames']) > 0) {
             $fileColumnValue = implode(', ', $data['filenames']);
@@ -386,31 +383,32 @@ class Asset extends Controller
             warranty_due_date = ?, 
             purchase_date = ?, 
             notes = ?, 
-            file = ?  -- ← this line added
+            file = ?
         WHERE asset_id = ?");
 
         $success = $this->statement->execute([
-            $asset_name,
-            $serial_number,
-            $brand,
-            $category_id,
-            $sub_category_id,
-            $type_id,
-            $asset_condition_id,
-            $status_id,
-            $location,
-            $specifications,
-            $asset_amount,
-            $warranty_duration,
-            $warranty_due_date,
-            $purchase_date,
-            $notes,
-            $fileColumnValue, // ← this value
+            $data['asset_name'] ?? null,
+            $data['serial_number'] ?? null,
+            $data['brand'] ?? null,
+            $data['category_id'] ?? null,
+            $data['sub_category_id'] ?? null,
+            $data['type_id'] ?? null,
+            $data['asset_condition_id'] ?? null,
+            $data['status_id'] ?? null,
+            $data['location'] ?? null,
+            $data['specifications'] ?? null,
+            $data['asset_amount'] ?? null,
+            $data['warranty_duration'] ?? null,
+            $data['warranty_due_date'] ?? null,
+            $data['purchase_date'] ?? null,
+            $data['notes'] ?? null,
+            $fileColumnValue,
             $id
         ]);
 
         return $success;
     }
+
 
 
     function deleteAsset($id)

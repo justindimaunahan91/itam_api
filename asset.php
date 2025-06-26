@@ -127,15 +127,17 @@ function handleRequest($controller, $actions)
                     sendJsonResponse(["message" => $success ? "Category added successfully" : "Creation failed"], $success ? 201 : 500);
                 }
 
-
                 if (isset($_GET['action']) && $_GET['action'] === 'update') {
-
-                    if (empty($_POST['serial_number'])) {
-                        sendJsonResponse(["error" => "Missing serial_number"], 400);
+                    $id = $_GET['id'] ?? null;
+                    if (!$id) {
+                        sendJsonResponse(["error" => "Missing asset_id in query string"], 400);
                     }
 
-                    $data = $_POST;
-
+                    $jsonData = $_POST['data'] ?? '{}';
+                    $data = json_decode($jsonData, true);
+                    if (!is_array($data)) {
+                        sendJsonResponse(["error" => "Invalid JSON in 'data' field"], 400);
+                    }
 
                     $files = $_FILES['file'] ?? null;
                     $filenames = [];
@@ -157,12 +159,6 @@ function handleRequest($controller, $actions)
                     }
 
                     $data['filenames'] = $filenames;
-
-                    if (!isset($_GET['id'])) {
-                        sendJsonResponse(["error" => "Missing asset_id in query string"], 400);
-                    }
-
-                    $id = $_GET['id'];
                     $success = call_user_func([$controller, $actions['update']], $id, $data);
                     sendJsonResponse(["message" => $success ? "Updated successfully" : "Update failed"], $success ? 200 : 500);
                     return;
@@ -206,44 +202,45 @@ function handleRequest($controller, $actions)
                 }
 
 
+
+                $data = json_decode($_POST['data'], true);
                 $data['filenames'] = $filenames;
 
-                if ($actions['create'] === 'insertAsset' && !isset($data['category_id'])) {
-                    sendJsonResponse(["error" => "Missing category_id"], 400);
+                if (!is_array($data)) {
+                    sendJsonResponse(["error" => "Decoded data is not an array"], 400);
                 }
 
+                if ($actions['create'] === 'insertAsset' && !isset($data['category'])) {
+                    sendJsonResponse(["error" => "Missing category_id"], 400);
+                }
 
                 $success = call_user_func([$controller, $actions['create']], $data);
                 sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
 
 
-                $data = json_decode($_POST['data'], true);
-                if (!is_array($data)) {
-                    sendJsonResponse(["error" => "Decoded data is not an array"], 400);
-                }
+                // $files = $_FILES['file'] ?? null;
+                // $filenames = [];
 
+                // if ($files && is_array($files['name'])) {
+                //     $uploadDir = __DIR__ . "/uploads/";
+                //     if (!is_dir($uploadDir)) {
+                //         mkdir($uploadDir, 0777, true);
+                //     }
 
-                $files = $_FILES['file'] ?? null;
-                $filenames = [];
+                //     foreach ($files['name'] as $index => $name) {
+                //         if ($files['error'][$index] === UPLOAD_ERR_OK) {
+                //             $fileName = time() . "_" . basename($name);
+                //             $filePath = "uploads/" . $fileName;
+                //             move_uploaded_file($files['tmp_name'][$index], $filePath);
+                //             $filenames[] = $filePath;
+                //         }
+                //     }
+                // }
 
-                if ($files && is_array($files['name'])) {
-                    $uploadDir = __DIR__ . "/uploads/";
-                    if (!is_dir($uploadDir)) {
-                        mkdir($uploadDir, 0777, true);
-                    }
+                // $data['filenames'] = $filenames;
 
-                    foreach ($files['name'] as $index => $name) {
-                        if ($files['error'][$index] === UPLOAD_ERR_OK) {
-                            $fileName = time() . "_" . basename($name);
-                            $filePath = "uploads/" . $fileName;
-                            move_uploaded_file($files['tmp_name'][$index], $filePath);
-                            $filenames[] = $filePath;
-                        }
-                    }
-                }
-
-                $data['filenames'] = $filenames;
-
+                // var_dump($data);
+                // echo $actions['create'];
                 if ($actions['batchInsert'] === 'batchInsertAssets') {
                     if ($data === null) {
                         sendJsonResponse(["error" => "Invalid JSON input"], 400);
@@ -257,9 +254,9 @@ function handleRequest($controller, $actions)
                         sendJsonResponse(["message" => "Batch insert completed."], 201);
                     }
                 } elseif ($actions['create'] === 'insertAsset') {
-                    if (!isset($data['category_id'])) {
-                        sendJsonResponse(["error" => "Missing category_id"], 400);
-                    }
+                    // if (!isset($data['data'])) {
+                    //     sendJsonResponse(["error" => "Missing category_id"], 400);
+                    // }
 
                     $success = call_user_func([$controller, $actions['create']], $data);
                     sendJsonResponse(["message" => $success ? "Created successfully" : "Creation failed"], $success ? 201 : 500);
